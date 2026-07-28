@@ -10,7 +10,7 @@ Phase 4 adds MongoDB-transaction-backed transfers, idempotency protection, linke
 
 Phase 5 adds validated saved beneficiaries, owner-scoped removal, beneficiary management UI, and transfer-form integration.
 
-Phase 6 adds loan applications, staff review decisions, atomic approval/disbursement, integer repayment calculations, idempotent transactional loan payments, and customer/staff loan interfaces.
+Phase 7 adds responsive, role-specific dashboards backed by read-only MongoDB analytics. Customers see balances, cash flow, loans, accounts, and recent transactions; employees see operational workload and high-value activity; administrators see bank-wide user and transfer trends.
 
 ## Quick start
 

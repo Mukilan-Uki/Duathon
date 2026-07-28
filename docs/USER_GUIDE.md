@@ -10,7 +10,13 @@ Phase 1 provides the public platform landing page and live API/database status. 
 4. Use **Forgot password** to request a one-time reset code.
 5. Changing a password signs out all sessions for safety.
 
-Employee and administrator operational dashboards remain scheduled for later phases.
+After sign-in, each role lands on its dashboard:
+
+- Customers can review total available balance, money sent and received, active loans, accounts, recent transactions, and six-month cash flow.
+- Employees can review assigned-customer counts, pending account and loan work, recent volume, account status distribution, and high-value transfers needing attention.
+- Administrators can review bank-wide users, accounts, transaction records, transferred value, pending loans, role distribution, and six-month transfer trends.
+
+Use the **Dashboard** link in the header or the dashboard sidebar to return to the overview.
 
 ## Bank accounts
 

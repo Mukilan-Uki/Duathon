@@ -23,8 +23,15 @@ export default function LoginPage() {
   const submit = async (values) => {
     setApiError('');
     try {
-      await login(values);
-      navigate(location.state?.from?.pathname || '/profile', { replace: true });
+      const response = await login(values);
+      const role = response.data.user.role;
+      const roleHome =
+        role === 'customer'
+          ? '/dashboard'
+          : role === 'employee'
+            ? '/employee/dashboard'
+            : '/admin/dashboard';
+      navigate(location.state?.from?.pathname || roleHome, { replace: true });
     } catch (error) {
       setApiError(getApiError(error, 'Unable to sign in'));
     }

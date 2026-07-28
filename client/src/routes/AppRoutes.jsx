@@ -2,6 +2,7 @@ import { Navigate, Route, Routes } from 'react-router-dom';
 import AppLayout from '../layouts/AppLayout';
 import ForgotPasswordPage from '../pages/auth/ForgotPasswordPage';
 import LoginPage from '../pages/auth/LoginPage';
+import AdminDashboardPage from '../pages/admin/AdminDashboardPage';
 import RegisterPage from '../pages/auth/RegisterPage';
 import ResetPasswordPage from '../pages/auth/ResetPasswordPage';
 import VerifyEmailPage from '../pages/auth/VerifyEmailPage';
@@ -13,7 +14,9 @@ import ReceiptPage from '../pages/customer/ReceiptPage';
 import TransactionDetailsPage from '../pages/customer/TransactionDetailsPage';
 import TransactionHistoryPage from '../pages/customer/TransactionHistoryPage';
 import TransferPage from '../pages/customer/TransferPage';
+import CustomerDashboardPage from '../pages/customer/CustomerDashboardPage';
 import AccountReviewPage from '../pages/employee/AccountReviewPage';
+import EmployeeDashboardPage from '../pages/employee/EmployeeDashboardPage';
 import LoanReviewPage from '../pages/employee/LoanReviewPage';
 import HomePage from '../pages/HomePage';
 import NotFoundPage from '../pages/NotFoundPage';
@@ -34,6 +37,7 @@ export default function AppRoutes() {
           <Route path="profile" element={<ProfilePage />} />
         </Route>
         <Route element={<ProtectedRoute roles={['customer']} />}>
+          <Route path="dashboard" element={<CustomerDashboardPage />} />
           <Route path="accounts" element={<AccountsPage />} />
           <Route path="beneficiaries" element={<BeneficiariesPage />} />
           <Route path="loans" element={<LoansPage />} />
@@ -41,6 +45,12 @@ export default function AppRoutes() {
           <Route path="transactions" element={<TransactionHistoryPage />} />
           <Route path="transactions/:transactionId" element={<TransactionDetailsPage />} />
           <Route path="transactions/:transactionId/receipt" element={<ReceiptPage />} />
+        </Route>
+        <Route element={<ProtectedRoute roles={['employee']} />}>
+          <Route path="employee/dashboard" element={<EmployeeDashboardPage />} />
+        </Route>
+        <Route element={<ProtectedRoute roles={['admin']} />}>
+          <Route path="admin/dashboard" element={<AdminDashboardPage />} />
         </Route>
         <Route element={<ProtectedRoute roles={['employee', 'admin']} />}>
           <Route path="account-reviews" element={<AccountReviewPage />} />

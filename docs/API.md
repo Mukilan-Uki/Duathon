@@ -86,3 +86,13 @@ Creation accepts a 12-digit `accountNumber` and a 2–60 character `nickname`. T
 | POST   | `/loans/:loanId/payments`                   | Customer        | Make an idempotent repayment       |
 
 Applications accept `disbursementAccountId`, `loanType`, `requestedAmountMinor`, `purpose`, and `repaymentMonths`. Payment requests require an `Idempotency-Key` header and contain `sourceAccountId` and `amountMinor`.
+
+## Dashboards
+
+| Method | Endpoint               | Role     | Purpose                       |
+| ------ | ---------------------- | -------- | ----------------------------- |
+| GET    | `/dashboards/customer` | Customer | Personal financial overview   |
+| GET    | `/dashboards/employee` | Employee | Operational workload overview |
+| GET    | `/dashboards/admin`    | Admin    | Bank-wide analytics overview  |
+
+Dashboard endpoints are read-only and return server-calculated summaries, recent activity, and six-month chart series.

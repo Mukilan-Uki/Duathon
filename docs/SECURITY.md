@@ -16,6 +16,8 @@ Beneficiary account identity comes from the database rather than client-provided
 
 Loan rates and limits come from trusted server configuration. Customers cannot select an interest rate or change calculated repayment values. Approval/disbursement and loan payments use MongoDB transactions, conditional balance updates, immutable financial records, resource ownership checks, role authorization, audit logs, and payment idempotency.
 
+Dashboard APIs enforce role authorization independently of the client routes. Customer queries are scoped to the authenticated user, bank-wide analytics require the administrator role, and all dashboard operations are read-only. High-value activity is an operational attention list based on the configured transfer limit; it is not represented as automated fraud detection.
+
 In local development without SMTP, security codes are written to the server console so the flow can be tested. Production never logs codes and must configure SMTP.
 
 ## Dependency audit note

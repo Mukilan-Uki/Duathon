@@ -4,6 +4,12 @@ import { useAuth } from '../hooks/useAuth';
 
 export default function AppLayout() {
   const { authenticated, user, logout } = useAuth();
+  const dashboardPath =
+    user?.role === 'customer'
+      ? '/dashboard'
+      : user?.role === 'employee'
+        ? '/employee/dashboard'
+        : '/admin/dashboard';
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900">
       <header className="border-b border-slate-200 bg-white">
@@ -21,6 +27,9 @@ export default function AppLayout() {
           <nav className="flex items-center gap-4 text-sm" aria-label="Account">
             {authenticated ? (
               <>
+                <Link className="font-medium text-slate-700" to={dashboardPath}>
+                  Dashboard
+                </Link>
                 {user.role === 'customer' && (
                   <>
                     <Link className="font-medium text-slate-700" to="/accounts">

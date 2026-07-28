@@ -31,3 +31,7 @@ Beneficiaries reference an existing account and retain immutable account-number 
 Applications reference an owned active account and remain pending. Approval calculates simple interest using integer basis points and integer arithmetic. Loan creation, account credit, disbursement transaction, application update, and audit event share one MongoDB transaction.
 
 Repayments conditionally debit an owned active account, optimistically reduce the loan’s outstanding balance, create `LoanPayment` and customer transaction records, update paid/completed status, and write an audit record in one transaction. Unique owner/idempotency-key indexes make repayment retries safe.
+
+## Dashboard analytics
+
+Role-specific dashboard routes call a dedicated service that uses read-only MongoDB counts and aggregation pipelines. Personal analytics always filter by the authenticated customer identifier. Employee dashboards expose operational totals and high-value activity, while bank-wide totals are limited to administrators. Six-month series are normalized on the server so the client receives zero-filled, display-ready periods.
