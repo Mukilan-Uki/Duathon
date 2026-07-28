@@ -28,6 +28,7 @@ export default function ConfirmationModal({ open, title, children, busy, onConfi
             className="rounded-lg border border-slate-300 px-4 py-2 font-semibold"
             disabled={busy}
             onClick={onCancel}
+            type="button"
           >
             Cancel
           </button>
@@ -35,6 +36,7 @@ export default function ConfirmationModal({ open, title, children, busy, onConfi
             className="rounded-lg bg-bank-700 px-4 py-2 font-semibold text-white disabled:opacity-60"
             disabled={busy}
             onClick={onConfirm}
+            type="button"
           >
             {busy ? 'Processing…' : 'Confirm transfer'}
           </button>

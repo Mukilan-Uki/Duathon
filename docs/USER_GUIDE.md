@@ -22,6 +22,8 @@ Customers can open **Notifications** to review account, transaction, loan, and s
 
 Employees use **Monitoring** to review recent transactions, flag activity, and add investigation notes. Administrators can also access monitoring and use **System & audit** to configure approved system keys and review immutable action history.
 
+Keyboard users can use the **Skip to main content** link when it appears on focus. All primary workflows expose visible focus indicators, and operating-system reduced-motion preferences are respected. If an unexpected display failure occurs, the recovery page confirms that banking data was not changed and offers a safe reload action.
+
 ## Bank accounts
 
 Customers open **Accounts**, select Savings or Current, and submit an application. New applications are pending with a zero balance. Employees or administrators open **Reviews**, enter a review note, and approve or reject the request. Approved accounts become active; rejected accounts are closed and retained.

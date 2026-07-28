@@ -18,6 +18,8 @@ test('renders the banking foundation home page', async () => {
     </AuthContext.Provider>,
     { wrapper: MemoryRouter },
   );
-  expect(screen.getByRole('heading', { name: /banking infrastructure/i })).toBeInTheDocument();
+  expect(
+    await screen.findByRole('heading', { name: /banking infrastructure/i }),
+  ).toBeInTheDocument();
   expect(await screen.findByText('online')).toBeInTheDocument();
 });

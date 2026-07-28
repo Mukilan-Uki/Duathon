@@ -12,6 +12,12 @@ export default function AppLayout() {
         : '/admin/dashboard';
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900">
+      <a
+        className="fixed left-4 top-2 z-50 -translate-y-20 rounded-lg bg-slate-900 px-4 py-2 font-semibold text-white transition focus:translate-y-0"
+        href="#main-content"
+      >
+        Skip to main content
+      </a>
       <header className="border-b border-slate-200 bg-white">
         <div className="mx-auto flex max-w-7xl items-center justify-between px-5 py-4 sm:px-8">
           <Link
@@ -83,7 +89,7 @@ export default function AppLayout() {
           </nav>
         </div>
       </header>
-      <main>
+      <main id="main-content" tabIndex="-1">
         <Outlet />
       </main>
     </div>

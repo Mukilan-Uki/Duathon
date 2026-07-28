@@ -14,6 +14,8 @@ Phase 7 adds responsive, role-specific dashboards backed by read-only MongoDB an
 
 Phase 8 adds preference-aware customer notifications, login-history visibility, employee transaction investigations, immutable administrator audit-log browsing, and audited system settings. Stored transfer and loan limits are applied by backend financial services with environment defaults as a fallback.
 
+Phase 9 hardens the platform with safer error classification, additional authorization and error tests, accessible keyboard workflows, reduced-motion support, a client error boundary, and route-level code splitting. See `docs/QUALITY.md` for the quality gate and manual release checklist.
+
 ## Quick start
 
 Requirements: Node.js 20+, npm 10+, and optionally a MongoDB Atlas connection string.

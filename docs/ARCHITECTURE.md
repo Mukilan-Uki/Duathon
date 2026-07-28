@@ -39,3 +39,7 @@ Role-specific dashboard routes call a dedicated service that uses read-only Mong
 ## Operational controls
 
 Notification creation occurs alongside the event that generated it and respects the recipient's preferences. High-value transfers create an investigation record inside the same MongoDB transaction. Staff can append investigation notes and change workflow status without modifying the financial transaction. Administrator settings are allow-listed, type-validated, and audited; transaction and loan limit settings override environment defaults at runtime.
+
+## Client delivery and resilience
+
+Each page is loaded through a route-level dynamic import. Authentication and layout infrastructure remain in the initial bundle, while role pages and chart libraries load only when requested. A top-level error boundary provides a safe recovery screen for unexpected rendering failures without suggesting that a financial action completed.
