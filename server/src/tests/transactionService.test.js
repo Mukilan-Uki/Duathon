@@ -7,6 +7,8 @@ const mocks = vi.hoisted(() => ({
   transactionCreate: vi.fn(),
   connectionTransaction: vi.fn(),
   createAuditLog: vi.fn(),
+  createNotification: vi.fn(),
+  suspiciousCreate: vi.fn(),
 }));
 
 vi.mock('mongoose', () => ({
@@ -30,9 +32,18 @@ vi.mock('../models/Transaction.js', () => ({
     create: mocks.transactionCreate,
   },
 }));
+vi.mock('../models/SuspiciousActivity.js', () => ({
+  default: { create: mocks.suspiciousCreate },
+}));
 
 vi.mock('../services/auditService.js', () => ({
   createAuditLog: mocks.createAuditLog,
+}));
+vi.mock('../services/notificationService.js', () => ({
+  createNotification: mocks.createNotification,
+}));
+vi.mock('../services/settingService.js', () => ({
+  getNumericSetting: vi.fn((_key, fallback) => fallback),
 }));
 
 const { transferMoney } = await import('../services/transactionService.js');

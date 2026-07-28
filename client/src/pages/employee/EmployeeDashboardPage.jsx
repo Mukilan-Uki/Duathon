@@ -57,6 +57,9 @@ export default function EmployeeDashboardPage() {
           icon={CircleAlert}
         />
       </section>
+      <p className="mt-4 text-sm text-slate-600">
+        {dashboard.summary.openInvestigations} open or active investigations.
+      </p>
 
       <div className="mt-6 grid gap-6 xl:grid-cols-[0.7fr_1.3fr]">
         <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-card">

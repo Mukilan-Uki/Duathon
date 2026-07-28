@@ -2,6 +2,7 @@ import { env } from '../config/env.js';
 import Account from '../models/Account.js';
 import Loan from '../models/Loan.js';
 import LoanApplication from '../models/LoanApplication.js';
+import SuspiciousActivity from '../models/SuspiciousActivity.js';
 import Transaction from '../models/Transaction.js';
 import User from '../models/User.js';
 
@@ -109,6 +110,7 @@ export async function getEmployeeDashboard(employeeId) {
     recentTransactionRecords,
     highValueActivity,
     accountStatusRows,
+    openInvestigations,
   ] = await Promise.all([
     User.countDocuments({ role: 'customer', assignedEmployee: employeeId }),
     Account.countDocuments({ status: 'pending' }),
@@ -123,6 +125,7 @@ export async function getEmployeeDashboard(employeeId) {
       .limit(5)
       .populate('owner', 'firstName lastName email'),
     Account.aggregate([{ $group: { _id: '$status', count: { $sum: 1 } } }]),
+    SuspiciousActivity.countDocuments({ status: { $in: ['open', 'investigating'] } }),
   ]);
 
   return {
@@ -132,6 +135,7 @@ export async function getEmployeeDashboard(employeeId) {
       pendingLoans,
       transactionsLast24Hours: recentTransactionRecords,
       attentionItems: highValueActivity.length,
+      openInvestigations,
     },
     highValueActivity,
     accountStatuses: accountStatusRows.map((row) => ({
@@ -143,37 +147,45 @@ export async function getEmployeeDashboard(employeeId) {
 
 export async function getAdminDashboard() {
   const startDate = sixMonthRange()[0].start;
-  const [roleRows, totalAccounts, totalTransactions, transferTotals, pendingLoans, monthlyRows] =
-    await Promise.all([
-      User.aggregate([{ $group: { _id: '$role', count: { $sum: 1 } } }]),
-      Account.countDocuments(),
-      Transaction.countDocuments(),
-      Transaction.aggregate([
-        { $match: { type: 'transfer', direction: 'sent', status: 'completed' } },
-        { $group: { _id: null, valueMinor: { $sum: '$amountMinor' } } },
-      ]),
-      LoanApplication.countDocuments({ status: 'pending' }),
-      Transaction.aggregate([
-        {
-          $match: {
-            type: 'transfer',
-            direction: 'sent',
-            status: 'completed',
-            createdAt: { $gte: startDate },
-          },
+  const [
+    roleRows,
+    totalAccounts,
+    totalTransactions,
+    transferTotals,
+    pendingLoans,
+    monthlyRows,
+    suspiciousActivities,
+  ] = await Promise.all([
+    User.aggregate([{ $group: { _id: '$role', count: { $sum: 1 } } }]),
+    Account.countDocuments(),
+    Transaction.countDocuments(),
+    Transaction.aggregate([
+      { $match: { type: 'transfer', direction: 'sent', status: 'completed' } },
+      { $group: { _id: null, valueMinor: { $sum: '$amountMinor' } } },
+    ]),
+    LoanApplication.countDocuments({ status: 'pending' }),
+    Transaction.aggregate([
+      {
+        $match: {
+          type: 'transfer',
+          direction: 'sent',
+          status: 'completed',
+          createdAt: { $gte: startDate },
         },
-        {
-          $group: {
-            _id: {
-              year: { $year: '$createdAt' },
-              month: { $month: '$createdAt' },
-            },
-            count: { $sum: 1 },
-            valueMinor: { $sum: '$amountMinor' },
+      },
+      {
+        $group: {
+          _id: {
+            year: { $year: '$createdAt' },
+            month: { $month: '$createdAt' },
           },
+          count: { $sum: 1 },
+          valueMinor: { $sum: '$amountMinor' },
         },
-      ]),
-    ]);
+      },
+    ]),
+    SuspiciousActivity.countDocuments({ status: { $in: ['open', 'investigating'] } }),
+  ]);
   const roles = Object.fromEntries(roleRows.map((row) => [row._id, row.count]));
   return {
     summary: {
@@ -185,6 +197,7 @@ export async function getAdminDashboard() {
       totalTransactions,
       transferredValueMinor: transferTotals[0]?.valueMinor || 0,
       pendingLoans,
+      suspiciousActivities,
     },
     usersByRole: roleRows.map((row) => ({ role: row._id, count: row.count })),
     transactionTrend: normalizeMonthly(monthlyRows, ['count', 'valueMinor']),

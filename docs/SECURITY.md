@@ -18,6 +18,8 @@ Loan rates and limits come from trusted server configuration. Customers cannot s
 
 Dashboard APIs enforce role authorization independently of the client routes. Customer queries are scoped to the authenticated user, bank-wide analytics require the administrator role, and all dashboard operations are read-only. High-value activity is an operational attention list based on the configured transfer limit; it is not represented as automated fraud detection.
 
+Notification ownership is enforced on every read update. Investigation access requires an employee or administrator role, while audit logs and system settings require an administrator. Audit-log mutation middleware prevents normal update and delete operations. Settings use a fixed key allow-list and strict value types, and every settings or investigation change records actor, target, network metadata, and before/after state.
+
 In local development without SMTP, security codes are written to the server console so the flow can be tested. Production never logs codes and must configure SMTP.
 
 ## Dependency audit note

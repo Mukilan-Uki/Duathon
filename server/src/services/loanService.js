@@ -9,6 +9,8 @@ import Transaction from '../models/Transaction.js';
 import { AppError } from '../utils/AppError.js';
 import { generateLoanNumber, generateLoanPaymentReference } from '../utils/loanReference.js';
 import { createAuditLog } from './auditService.js';
+import { createNotification } from './notificationService.js';
+import { getNumericSetting } from './settingService.js';
 
 const interestRates = {
   personal: () => env.LOAN_PERSONAL_RATE_BPS,
@@ -38,11 +40,15 @@ export function calculateLoanTerms(principalMinor, rateBps, months) {
 }
 
 export async function submitLoanApplication(userId, input) {
-  if (input.requestedAmountMinor < env.LOAN_MIN_MINOR) {
-    throw new AppError(`Minimum loan amount is ${env.LOAN_MIN_MINOR} minor units`, 422);
+  const [loanMinMinor, loanMaxMinor] = await Promise.all([
+    getNumericSetting('loan_min_minor', env.LOAN_MIN_MINOR),
+    getNumericSetting('loan_max_minor', env.LOAN_MAX_MINOR),
+  ]);
+  if (input.requestedAmountMinor < loanMinMinor) {
+    throw new AppError(`Minimum loan amount is ${loanMinMinor} minor units`, 422);
   }
-  if (input.requestedAmountMinor > env.LOAN_MAX_MINOR) {
-    throw new AppError(`Maximum loan amount is ${env.LOAN_MAX_MINOR} minor units`, 422);
+  if (input.requestedAmountMinor > loanMaxMinor) {
+    throw new AppError(`Maximum loan amount is ${loanMaxMinor} minor units`, 422);
   }
   const account = await Account.findOne({
     _id: input.disbursementAccountId,
@@ -112,6 +118,17 @@ export async function reviewLoanApplication(applicationId, reviewer, input, meta
           metadata,
           session,
         });
+        await createNotification(
+          {
+            recipient: application.applicant,
+            type: 'loan',
+            title: 'Loan application declined',
+            message: `Your ${application.loanType} loan application was not approved.`,
+            targetType: 'LoanApplication',
+            targetId: application._id,
+          },
+          session,
+        );
         return { application, loan: null };
       }
 
@@ -205,6 +222,17 @@ export async function reviewLoanApplication(applicationId, reviewer, input, meta
         metadata,
         session,
       });
+      await createNotification(
+        {
+          recipient: application.applicant,
+          type: 'loan',
+          title: 'Loan approved',
+          message: `Your ${application.loanType} loan was approved and disbursed.`,
+          targetType: 'Loan',
+          targetId: loan._id,
+        },
+        session,
+      );
       return { application, loan };
     },
     { readConcern: { level: 'snapshot' }, writeConcern: { w: 'majority' } },
@@ -374,6 +402,17 @@ export async function payLoan(userId, loanId, input, idempotencyKey, metadata) {
           metadata,
           session,
         });
+        await createNotification(
+          {
+            recipient: userId,
+            type: 'loan',
+            title: 'Loan payment received',
+            message: `Your payment of ${input.amountMinor} minor units was recorded.`,
+            targetType: 'LoanPayment',
+            targetId: payment._id,
+          },
+          session,
+        );
         return { payment, loan: paidLoan, duplicate: false };
       },
       { readConcern: { level: 'snapshot' }, writeConcern: { w: 'majority' } },

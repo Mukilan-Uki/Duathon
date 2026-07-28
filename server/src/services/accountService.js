@@ -2,6 +2,7 @@ import Account from '../models/Account.js';
 import { AppError } from '../utils/AppError.js';
 import { generateUniqueAccountNumber } from '../utils/accountNumber.js';
 import { createAuditLog } from './auditService.js';
+import { createNotification } from './notificationService.js';
 
 export async function applyForAccount(userId, input) {
   const existing = await Account.exists({ owner: userId, accountType: input.accountType });
@@ -61,6 +62,17 @@ export async function reviewAccount(accountId, reviewer, decision, reviewNote, m
     after: { status: account.status, reviewNote: account.reviewNote },
     metadata,
   });
+  await createNotification({
+    recipient: account.owner,
+    type: 'account',
+    title: decision === 'approve' ? 'Account approved' : 'Account application declined',
+    message:
+      decision === 'approve'
+        ? `Your ${account.accountType} account is now active.`
+        : `Your ${account.accountType} account application was not approved.`,
+    targetType: 'Account',
+    targetId: account._id,
+  });
   return account;
 }
 
@@ -94,6 +106,14 @@ export async function changeAccountStatus(accountId, actor, status, note, metada
     before,
     after: { status: account.status, reviewNote: account.reviewNote },
     metadata,
+  });
+  await createNotification({
+    recipient: account.owner,
+    type: 'account',
+    title: `Account ${status}`,
+    message: `Your ${account.accountType} account status changed to ${status}.`,
+    targetType: 'Account',
+    targetId: account._id,
   });
   return account;
 }

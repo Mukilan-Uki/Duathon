@@ -67,7 +67,7 @@ export default function AdminDashboardPage() {
         <SummaryCard
           label="Transaction records"
           value={dashboard.summary.totalTransactions}
-          detail={`${dashboard.summary.pendingLoans} loans pending`}
+          detail={`${dashboard.summary.pendingLoans} loans pending · ${dashboard.summary.suspiciousActivities} investigations`}
           icon={ShieldCheck}
         />
         <SummaryCard

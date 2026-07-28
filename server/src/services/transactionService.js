@@ -3,9 +3,12 @@ import mongoose from 'mongoose';
 import { env } from '../config/env.js';
 import Account from '../models/Account.js';
 import Transaction from '../models/Transaction.js';
+import SuspiciousActivity from '../models/SuspiciousActivity.js';
 import { AppError } from '../utils/AppError.js';
 import { generateTransferReference } from '../utils/transactionReference.js';
 import { createAuditLog } from './auditService.js';
+import { createNotification } from './notificationService.js';
+import { getNumericSetting } from './settingService.js';
 
 function requestFingerprint(userId, input) {
   return crypto
@@ -38,11 +41,15 @@ async function findIdempotentResult(userId, idempotencyKey, fingerprint, session
 }
 
 export async function transferMoney(userId, input, idempotencyKey, metadata) {
-  if (input.amountMinor < env.TRANSFER_MIN_MINOR) {
-    throw new AppError(`Minimum transfer amount is ${env.TRANSFER_MIN_MINOR} minor units`, 422);
+  const [transferMinMinor, transferMaxMinor] = await Promise.all([
+    getNumericSetting('transfer_min_minor', env.TRANSFER_MIN_MINOR),
+    getNumericSetting('transfer_max_minor', env.TRANSFER_MAX_MINOR),
+  ]);
+  if (input.amountMinor < transferMinMinor) {
+    throw new AppError(`Minimum transfer amount is ${transferMinMinor} minor units`, 422);
   }
-  if (input.amountMinor > env.TRANSFER_MAX_MINOR) {
-    throw new AppError(`Transfer limit is ${env.TRANSFER_MAX_MINOR} minor units`, 422);
+  if (input.amountMinor > transferMaxMinor) {
+    throw new AppError(`Transfer limit is ${transferMaxMinor} minor units`, 422);
   }
 
   const fingerprint = requestFingerprint(userId, input);
@@ -171,6 +178,43 @@ export async function transferMoney(userId, input, idempotencyKey, metadata) {
           metadata,
           session,
         });
+        await Promise.all([
+          createNotification(
+            {
+              recipient: sender.owner,
+              type: 'transaction',
+              title: 'Transfer completed',
+              message: `Your transfer of ${input.amountMinor} minor units was completed.`,
+              targetType: 'Transaction',
+              targetId: sentTransaction._id,
+            },
+            session,
+          ),
+          createNotification(
+            {
+              recipient: receiver.owner,
+              type: 'transaction',
+              title: 'Money received',
+              message: `You received ${input.amountMinor} minor units.`,
+              targetType: 'Transaction',
+              targetId: receivedTransaction._id,
+            },
+            session,
+          ),
+        ]);
+        if (input.amountMinor >= Math.floor(transferMaxMinor * 0.8)) {
+          await SuspiciousActivity.create(
+            [
+              {
+                transaction: sentTransaction._id,
+                customer: sender.owner,
+                reason: 'Transfer reached at least 80% of the configured transaction limit',
+                source: 'automatic',
+              },
+            ],
+            { session },
+          );
+        }
 
         return { transaction: sentTransaction, counterpart: receivedTransaction, duplicate: false };
       },

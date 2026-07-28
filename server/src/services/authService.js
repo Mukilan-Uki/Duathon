@@ -3,9 +3,10 @@ import RefreshToken from '../models/RefreshToken.js';
 import User from '../models/User.js';
 import { AppError } from '../utils/AppError.js';
 import { consumeOtp, issueOtp } from './otpService.js';
+import { createNotification } from './notificationService.js';
+import { getNumericSetting } from './settingService.js';
 import { createSession } from './tokenService.js';
 
-const MAX_LOGIN_ATTEMPTS = 5;
 const LOCK_MINUTES = 15;
 
 async function recordLogin(user, email, successful, reason, metadata) {
@@ -51,6 +52,7 @@ export async function resendVerification(email) {
 }
 
 export async function loginUser(emailInput, password, metadata) {
+  const maxLoginAttempts = await getNumericSetting('login_max_attempts', 5);
   const email = emailInput.toLowerCase();
   const user = await User.findOne({ email }).select(
     '+passwordHash +failedLoginAttempts +lockUntil',
@@ -68,11 +70,21 @@ export async function loginUser(emailInput, password, metadata) {
 
   if (!(await user.verifyPassword(password))) {
     user.failedLoginAttempts += 1;
-    if (user.failedLoginAttempts >= MAX_LOGIN_ATTEMPTS) {
+    if (user.failedLoginAttempts >= maxLoginAttempts) {
       user.lockUntil = new Date(Date.now() + LOCK_MINUTES * 60 * 1000);
       user.failedLoginAttempts = 0;
     }
     await user.save();
+    if (user.lockUntil && user.lockUntil > new Date()) {
+      await createNotification({
+        recipient: user._id,
+        type: 'security',
+        title: 'Account temporarily locked',
+        message: 'Your account was locked after repeated unsuccessful sign-in attempts.',
+        targetType: 'User',
+        targetId: user._id,
+      });
+    }
     await recordLogin(user, email, false, 'invalid_credentials', metadata);
     throw new AppError('Invalid email or password', 401);
   }
@@ -112,6 +124,14 @@ export async function resetPassword(email, code, password) {
     { user: user._id, revokedAt: null },
     { $set: { revokedAt: new Date() } },
   );
+  await createNotification({
+    recipient: user._id,
+    type: 'security',
+    title: 'Password reset',
+    message: 'Your password was reset. Contact support immediately if this was not you.',
+    targetType: 'User',
+    targetId: user._id,
+  });
 }
 
 export async function changePassword(userId, currentPassword, newPassword) {
@@ -126,4 +146,12 @@ export async function changePassword(userId, currentPassword, newPassword) {
     { user: user._id, revokedAt: null },
     { $set: { revokedAt: new Date() } },
   );
+  await createNotification({
+    recipient: user._id,
+    type: 'security',
+    title: 'Password changed',
+    message: 'Your password was changed and existing sessions were revoked.',
+    targetType: 'User',
+    targetId: user._id,
+  });
 }

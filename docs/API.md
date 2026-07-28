@@ -96,3 +96,18 @@ Applications accept `disbursementAccountId`, `loanType`, `requestedAmountMinor`,
 | GET    | `/dashboards/admin`    | Admin    | Bank-wide analytics overview  |
 
 Dashboard endpoints are read-only and return server-calculated summaries, recent activity, and six-month chart series.
+
+## Operations, notifications, and governance
+
+| Method | Endpoint                                         | Role            | Purpose                         |
+| ------ | ------------------------------------------------ | --------------- | ------------------------------- |
+| GET    | `/operations/notifications`                      | Authenticated   | List personal notifications     |
+| PATCH  | `/operations/notifications/:notificationId/read` | Customer        | Mark an owned notification read |
+| PATCH  | `/operations/notifications/read-all`             | Customer        | Mark all notifications read     |
+| PATCH  | `/operations/notification-preferences`           | Customer        | Update alert preferences        |
+| GET    | `/operations/suspicious-activities`              | Employee, admin | List investigations             |
+| POST   | `/operations/transactions/:transactionId/flag`   | Employee, admin | Flag a transaction              |
+| PATCH  | `/operations/suspicious-activities/:activityId`  | Employee, admin | Add notes or update status      |
+| GET    | `/operations/audit-logs`                         | Admin           | Browse immutable audit logs     |
+| GET    | `/operations/system-settings`                    | Admin           | List system settings            |
+| PUT    | `/operations/system-settings`                    | Admin           | Save an audited setting         |

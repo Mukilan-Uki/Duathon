@@ -35,3 +35,7 @@ Repayments conditionally debit an owned active account, optimistically reduce th
 ## Dashboard analytics
 
 Role-specific dashboard routes call a dedicated service that uses read-only MongoDB counts and aggregation pipelines. Personal analytics always filter by the authenticated customer identifier. Employee dashboards expose operational totals and high-value activity, while bank-wide totals are limited to administrators. Six-month series are normalized on the server so the client receives zero-filled, display-ready periods.
+
+## Operational controls
+
+Notification creation occurs alongside the event that generated it and respects the recipient's preferences. High-value transfers create an investigation record inside the same MongoDB transaction. Staff can append investigation notes and change workflow status without modifying the financial transaction. Administrator settings are allow-listed, type-validated, and audited; transaction and loan limit settings override environment defaults at runtime.

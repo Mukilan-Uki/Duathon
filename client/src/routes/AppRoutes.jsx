@@ -3,6 +3,7 @@ import AppLayout from '../layouts/AppLayout';
 import ForgotPasswordPage from '../pages/auth/ForgotPasswordPage';
 import LoginPage from '../pages/auth/LoginPage';
 import AdminDashboardPage from '../pages/admin/AdminDashboardPage';
+import AdminOperationsPage from '../pages/admin/AdminOperationsPage';
 import RegisterPage from '../pages/auth/RegisterPage';
 import ResetPasswordPage from '../pages/auth/ResetPasswordPage';
 import VerifyEmailPage from '../pages/auth/VerifyEmailPage';
@@ -15,8 +16,10 @@ import TransactionDetailsPage from '../pages/customer/TransactionDetailsPage';
 import TransactionHistoryPage from '../pages/customer/TransactionHistoryPage';
 import TransferPage from '../pages/customer/TransferPage';
 import CustomerDashboardPage from '../pages/customer/CustomerDashboardPage';
+import NotificationsPage from '../pages/customer/NotificationsPage';
 import AccountReviewPage from '../pages/employee/AccountReviewPage';
 import EmployeeDashboardPage from '../pages/employee/EmployeeDashboardPage';
+import TransactionMonitoringPage from '../pages/employee/TransactionMonitoringPage';
 import LoanReviewPage from '../pages/employee/LoanReviewPage';
 import HomePage from '../pages/HomePage';
 import NotFoundPage from '../pages/NotFoundPage';
@@ -38,6 +41,7 @@ export default function AppRoutes() {
         </Route>
         <Route element={<ProtectedRoute roles={['customer']} />}>
           <Route path="dashboard" element={<CustomerDashboardPage />} />
+          <Route path="notifications" element={<NotificationsPage />} />
           <Route path="accounts" element={<AccountsPage />} />
           <Route path="beneficiaries" element={<BeneficiariesPage />} />
           <Route path="loans" element={<LoansPage />} />
@@ -51,10 +55,12 @@ export default function AppRoutes() {
         </Route>
         <Route element={<ProtectedRoute roles={['admin']} />}>
           <Route path="admin/dashboard" element={<AdminDashboardPage />} />
+          <Route path="admin/operations" element={<AdminOperationsPage />} />
         </Route>
         <Route element={<ProtectedRoute roles={['employee', 'admin']} />}>
           <Route path="account-reviews" element={<AccountReviewPage />} />
           <Route path="loan-reviews" element={<LoanReviewPage />} />
+          <Route path="transaction-monitoring" element={<TransactionMonitoringPage />} />
         </Route>
         <Route path="*" element={<NotFoundPage />} />
       </Route>

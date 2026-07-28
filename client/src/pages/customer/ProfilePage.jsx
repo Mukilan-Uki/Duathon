@@ -5,6 +5,7 @@ import Alert from '../../components/common/Alert';
 import FormField from '../../components/forms/FormField';
 import { useAuth } from '../../hooks/useAuth';
 import { authService } from '../../services/authService';
+import { operationsService } from '../../services/operationsService';
 import { getApiError } from '../../utils/apiError';
 
 export default function ProfilePage() {
@@ -40,6 +41,23 @@ export default function ProfilePage() {
       reset();
       clearSession();
       setTimeout(() => navigate('/login', { replace: true }), 1200);
+    } catch (error) {
+      setApiError(getApiError(error));
+    }
+  };
+
+  const updatePreferences = async (event) => {
+    const form = new FormData(event.currentTarget);
+    event.preventDefault();
+    setApiError('');
+    try {
+      await operationsService.preferences({
+        transaction: form.has('transaction'),
+        loan: form.has('loan'),
+        security: form.has('security'),
+        account: form.has('account'),
+      });
+      setNotice('Notification preferences updated.');
     } catch (error) {
       setApiError(getApiError(error));
     }
@@ -109,6 +127,27 @@ export default function ProfilePage() {
           </form>
         </section>
       </div>
+      {user.role === 'customer' && (
+        <section className="mt-6 rounded-2xl border border-slate-200 bg-white p-6 shadow-card">
+          <h2 className="text-xl font-semibold">Notification preferences</h2>
+          <form className="mt-5 flex flex-wrap items-center gap-5" onSubmit={updatePreferences}>
+            {['transaction', 'loan', 'security', 'account'].map((type) => (
+              <label className="flex items-center gap-2 capitalize" key={type}>
+                <input
+                  className="h-4 w-4 accent-bank-700"
+                  type="checkbox"
+                  name={type}
+                  defaultChecked={user.notificationPreferences?.[type] !== false}
+                />
+                {type} alerts
+              </label>
+            ))}
+            <button className="rounded-lg bg-bank-700 px-5 py-2.5 font-semibold text-white">
+              Save preferences
+            </button>
+          </form>
+        </section>
+      )}
       <section className="mt-6 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-card">
         <div className="p-6">
           <h2 className="text-xl font-semibold">Recent login history</h2>

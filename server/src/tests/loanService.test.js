@@ -14,6 +14,7 @@ const mocks = vi.hoisted(() => ({
   paymentCreate: vi.fn(),
   transactionCreate: vi.fn(),
   audit: vi.fn(),
+  createNotification: vi.fn(),
 }));
 
 vi.mock('mongoose', () => ({
@@ -50,6 +51,12 @@ vi.mock('../models/Transaction.js', () => ({
 }));
 vi.mock('../services/auditService.js', () => ({
   createAuditLog: mocks.audit,
+}));
+vi.mock('../services/notificationService.js', () => ({
+  createNotification: mocks.createNotification,
+}));
+vi.mock('../services/settingService.js', () => ({
+  getNumericSetting: vi.fn((_key, fallback) => fallback),
 }));
 
 const { calculateLoanTerms, payLoan, reviewLoanApplication, submitLoanApplication } =

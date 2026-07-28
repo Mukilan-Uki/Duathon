@@ -37,6 +37,12 @@ const userSchema = new mongoose.Schema(
       default: null,
       index: true,
     },
+    notificationPreferences: {
+      transaction: { type: Boolean, default: true },
+      loan: { type: Boolean, default: true },
+      security: { type: Boolean, default: true },
+      account: { type: Boolean, default: true },
+    },
   },
   {
     timestamps: true,

@@ -12,6 +12,8 @@ Phase 5 adds validated saved beneficiaries, owner-scoped removal, beneficiary ma
 
 Phase 7 adds responsive, role-specific dashboards backed by read-only MongoDB analytics. Customers see balances, cash flow, loans, accounts, and recent transactions; employees see operational workload and high-value activity; administrators see bank-wide user and transfer trends.
 
+Phase 8 adds preference-aware customer notifications, login-history visibility, employee transaction investigations, immutable administrator audit-log browsing, and audited system settings. Stored transfer and loan limits are applied by backend financial services with environment defaults as a fallback.
+
 ## Quick start
 
 Requirements: Node.js 20+, npm 10+, and optionally a MongoDB Atlas connection string.
