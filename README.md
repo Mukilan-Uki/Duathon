@@ -2,6 +2,10 @@
 
 A secure digital-banking platform rebuilt for Duothan 6.0 – Phase 02. This monorepo contains a React client and an Express/MongoDB API. Phase 1 establishes project tooling, health monitoring, security middleware, responsive routing, and documentation.
 
+Phase 2 adds customer registration, email verification, login/logout, protected routes, refresh-token rotation, role authorization, password recovery, account lockout, and login history.
+
+Phase 3 adds Savings and Current account applications, backend-generated account numbers, customer account views, staff approval, status management, and immutable decision audit records.
+
 ## Quick start
 
 Requirements: Node.js 20+, npm 10+, and optionally a MongoDB Atlas connection string.
