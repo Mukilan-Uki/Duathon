@@ -20,3 +20,13 @@
   outline: 3px solid #0d9488;
   outline-offset: 3px;
 }
+
+@media print {
+  header {
+    display: none;
+  }
+
+  body {
+    background: white;
+  }
+}

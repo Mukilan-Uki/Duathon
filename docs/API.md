@@ -37,3 +37,26 @@ All account endpoints require a Bearer access token.
 | PATCH  | `/accounts/:accountId/status` | Employee, admin | Activate or suspend; only admin may close       |
 
 Account numbers and balances are never accepted from the client. Balance values use integer LKR minor units.
+
+## Transactions
+
+| Method | Endpoint                               | Role            | Purpose                                  |
+| ------ | -------------------------------------- | --------------- | ---------------------------------------- |
+| POST   | `/transactions/transfer`               | Customer        | Atomically transfer money                |
+| GET    | `/transactions/history`                | Customer        | Search/filter paginated personal history |
+| GET    | `/transactions/monitor`                | Employee, admin | Read-only transaction monitoring         |
+| GET    | `/transactions/:transactionId`         | Owner or staff  | View authorized details                  |
+| GET    | `/transactions/:transactionId/receipt` | Owner or staff  | Generate receipt data                    |
+
+Transfer requests require an `Idempotency-Key` header containing 8–128 letters, numbers, underscores, or hyphens. The JSON body contains:
+
+```json
+{
+  "senderAccountId": "507f1f77bcf86cd799439011",
+  "receiverAccountNumber": "609876543210",
+  "amountMinor": 1050,
+  "description": "Invoice 42"
+}
+```
+
+History accepts `search`, `direction`, `type`, `status`, `dateFrom`, `dateTo`, `page`, and `limit`. Dates use `YYYY-MM-DD`.

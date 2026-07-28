@@ -22,9 +22,17 @@ export default function AppLayout() {
             {authenticated ? (
               <>
                 {user.role === 'customer' && (
-                  <Link className="font-medium text-slate-700" to="/accounts">
-                    Accounts
-                  </Link>
+                  <>
+                    <Link className="font-medium text-slate-700" to="/accounts">
+                      Accounts
+                    </Link>
+                    <Link className="hidden font-medium text-slate-700 md:block" to="/transfer">
+                      Transfer
+                    </Link>
+                    <Link className="hidden font-medium text-slate-700 lg:block" to="/transactions">
+                      Transactions
+                    </Link>
+                  </>
                 )}
                 {['employee', 'admin'].includes(user.role) && (
                   <Link className="font-medium text-slate-700" to="/account-reviews">

@@ -22,6 +22,8 @@ const result = z
     SMTP_USER: z.string().optional().default(''),
     SMTP_PASSWORD: z.string().optional().default(''),
     EMAIL_FROM: z.string().default('Duothan Bank <no-reply@duothan.local>'),
+    TRANSFER_MIN_MINOR: z.coerce.number().int().positive().default(100),
+    TRANSFER_MAX_MINOR: z.coerce.number().int().positive().default(100000000),
   })
   .safeParse(process.env);
 
@@ -32,6 +34,10 @@ if (!result.success) {
 }
 
 export const env = result.data;
+
+if (env.TRANSFER_MIN_MINOR > env.TRANSFER_MAX_MINOR) {
+  throw new Error('TRANSFER_MIN_MINOR cannot exceed TRANSFER_MAX_MINOR');
+}
 
 if (
   env.NODE_ENV === 'production' &&

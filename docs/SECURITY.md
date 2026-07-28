@@ -10,6 +10,8 @@ Cookie-backed refresh and logout requests enforce the configured frontend origin
 
 Account numbers and balances are backend-controlled. Customers can only read accounts they own. Staff account decisions use role checks, validated state transitions, and immutable audit records containing actor, target, IP address, user agent, and before/after values.
 
+Transfers never accept a frontend balance. The service validates account ownership and status, receiver status, currency, limits, and safe integer amounts. A conditional debit prevents concurrent overspending. Debit, credit, both financial records, and audit logging share one MongoDB transaction. Idempotency keys prevent duplicate money movement, and completed financial records have no physical-delete endpoint.
+
 In local development without SMTP, security codes are written to the server console so the flow can be tested. Production never logs codes and must configure SMTP.
 
 ## Dependency audit note

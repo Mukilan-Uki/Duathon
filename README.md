@@ -6,6 +6,8 @@ Phase 2 adds customer registration, email verification, login/logout, protected 
 
 Phase 3 adds Savings and Current account applications, backend-generated account numbers, customer account views, staff approval, status management, and immutable decision audit records.
 
+Phase 4 adds MongoDB-transaction-backed transfers, idempotency protection, linked sender/receiver records, configurable limits, searchable transaction history, details, and printable receipts.
+
 ## Quick start
 
 Requirements: Node.js 20+, npm 10+, and optionally a MongoDB Atlas connection string.

@@ -15,3 +15,9 @@ Passwords are hashed with bcrypt. Login returns a short-lived JWT access token w
 ## Account lifecycle
 
 Customers submit Savings or Current account applications. The backend generates a unique 12-digit number beginning with the Duothan `60` prefix and initializes both balance fields to zero minor units. Staff can approve or reject pending applications and manage active/suspended status. Only administrators can close accounts. Administrative transitions create immutable audit records.
+
+## Transfer transaction boundary
+
+The transfer service opens a MongoDB transaction with snapshot reads and majority writes. It conditionally debits the sender, credits the receiver, inserts linked debit/credit records, and inserts an audit record within the same session. Any thrown error aborts every write. The sender record has a unique owner/idempotency-key index, allowing retries to return the original completed result without moving funds twice.
+
+Balances and transaction amounts are safe integer minor units. The conditional debit includes the live stored balance, so concurrent transfers cannot overdraw an account.

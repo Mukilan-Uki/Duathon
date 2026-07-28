@@ -15,3 +15,9 @@ Employee and administrator operational dashboards remain scheduled for later pha
 ## Bank accounts
 
 Customers open **Accounts**, select Savings or Current, and submit an application. New applications are pending with a zero balance. Employees or administrators open **Reviews**, enter a review note, and approve or reject the request. Approved accounts become active; rejected accounts are closed and retained.
+
+## Transfers and history
+
+Open **Transfer**, select an active sender account, enter the receiver’s 12-digit account number, amount, and description, then review the confirmation dialog. Do not close the page while a request is processing; safe retries use the same request key.
+
+Open **Transactions** to search by reference, description, or counterparty account and filter by direction, status, or date. Select **Details** for the balance snapshot and receipt. The receipt page can be printed or saved as PDF through the browser.

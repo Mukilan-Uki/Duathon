@@ -8,15 +8,22 @@ export async function createAuditLog({
   before,
   after,
   metadata,
+  session,
 }) {
-  return AuditLog.create({
-    actor,
-    action,
-    targetType,
-    targetId,
-    before,
-    after,
-    ipAddress: metadata.ip,
-    userAgent: metadata.userAgent,
-  });
+  const [auditLog] = await AuditLog.create(
+    [
+      {
+        actor,
+        action,
+        targetType,
+        targetId,
+        before,
+        after,
+        ipAddress: metadata.ip,
+        userAgent: metadata.userAgent,
+      },
+    ],
+    { session },
+  );
+  return auditLog;
 }
