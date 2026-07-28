@@ -35,15 +35,23 @@ export default function AppLayout() {
                     >
                       Beneficiaries
                     </Link>
+                    <Link className="hidden font-medium text-slate-700 xl:block" to="/loans">
+                      Loans
+                    </Link>
                     <Link className="hidden font-medium text-slate-700 xl:block" to="/transactions">
                       Transactions
                     </Link>
                   </>
                 )}
                 {['employee', 'admin'].includes(user.role) && (
-                  <Link className="font-medium text-slate-700" to="/account-reviews">
-                    Reviews
-                  </Link>
+                  <>
+                    <Link className="font-medium text-slate-700" to="/account-reviews">
+                      Account reviews
+                    </Link>
+                    <Link className="hidden font-medium text-slate-700 lg:block" to="/loan-reviews">
+                      Loan reviews
+                    </Link>
+                  </>
                 )}
                 <Link className="font-medium text-slate-700" to="/profile">
                   {user.firstName}

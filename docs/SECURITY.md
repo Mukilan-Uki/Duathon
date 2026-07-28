@@ -14,6 +14,8 @@ Transfers never accept a frontend balance. The service validates account ownersh
 
 Beneficiary account identity comes from the database rather than client-provided names. Customers cannot save their own accounts or remove another customer’s beneficiary. Selecting a beneficiary only fills the transfer form; the transfer service independently revalidates the destination account.
 
+Loan rates and limits come from trusted server configuration. Customers cannot select an interest rate or change calculated repayment values. Approval/disbursement and loan payments use MongoDB transactions, conditional balance updates, immutable financial records, resource ownership checks, role authorization, audit logs, and payment idempotency.
+
 In local development without SMTP, security codes are written to the server console so the flow can be tested. Production never logs codes and must configure SMTP.
 
 ## Dependency audit note

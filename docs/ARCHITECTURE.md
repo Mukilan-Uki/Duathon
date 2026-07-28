@@ -25,3 +25,9 @@ Balances and transaction amounts are safe integer minor units. The conditional d
 ## Beneficiary validation
 
 Beneficiaries reference an existing account and retain immutable account-number and registered-name snapshots for display. Creation resolves the account on the backend, requires an active destination, prevents saving the customer’s own accounts, and enforces one saved record per owner/destination pair. Removal always includes the authenticated owner in the deletion predicate.
+
+## Loan lifecycle
+
+Applications reference an owned active account and remain pending. Approval calculates simple interest using integer basis points and integer arithmetic. Loan creation, account credit, disbursement transaction, application update, and audit event share one MongoDB transaction.
+
+Repayments conditionally debit an owned active account, optimistically reduce the loan’s outstanding balance, create `LoanPayment` and customer transaction records, update paid/completed status, and write an audit record in one transaction. Unique owner/idempotency-key indexes make repayment retries safe.

@@ -25,3 +25,9 @@ Open **Transactions** to search by reference, description, or counterparty accou
 ## Beneficiaries
 
 Open **Beneficiaries**, enter a nickname and another customer’s active 12-digit account number, and choose **Save beneficiary**. Saved beneficiaries appear as optional recipients on the Transfer page. Removing one does not alter previous transactions.
+
+## Loans
+
+Customers open **Loans**, select an active disbursement account, type, requested amount, repayment period, and purpose. The application remains pending until staff review. Approved funds are credited to the selected account and repayment details appear immediately.
+
+Employees and administrators open **Loan reviews**, add a review note, and approve/disburse or reject. Previous decisions remain visible. Customers make payments from an active account through the confirmation dialog; successful payments update the outstanding balance and transaction history.

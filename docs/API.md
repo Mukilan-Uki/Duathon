@@ -72,3 +72,17 @@ All beneficiary endpoints require an authenticated customer.
 | DELETE | `/beneficiaries/:beneficiaryId` | Remove an owned beneficiary preference       |
 
 Creation accepts a 12-digit `accountNumber` and a 2–60 character `nickname`. The server resolves the account and stores the registered account name; it rejects inactive, self-owned, nonexistent, and duplicate accounts.
+
+## Loans
+
+| Method | Endpoint                                    | Role            | Purpose                            |
+| ------ | ------------------------------------------- | --------------- | ---------------------------------- |
+| POST   | `/loans/applications`                       | Customer        | Submit a loan application          |
+| GET    | `/loans/applications/me`                    | Customer        | Track application decisions        |
+| GET    | `/loans/applications`                       | Employee, admin | List pending or previous decisions |
+| PATCH  | `/loans/applications/:applicationId/review` | Employee, admin | Approve/disburse or reject         |
+| GET    | `/loans/me`                                 | Customer        | List active and previous loans     |
+| GET    | `/loans/:loanId/payments`                   | Customer        | List owned loan payments           |
+| POST   | `/loans/:loanId/payments`                   | Customer        | Make an idempotent repayment       |
+
+Applications accept `disbursementAccountId`, `loanType`, `requestedAmountMinor`, `purpose`, and `repaymentMonths`. Payment requests require an `Idempotency-Key` header and contain `sourceAccountId` and `amountMinor`.

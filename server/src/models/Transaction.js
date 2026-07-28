@@ -19,13 +19,13 @@ const transactionSchema = new mongoose.Schema(
     counterpartyAccount: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Account',
-      required: true,
+      default: null,
       immutable: true,
     },
     counterpartyOwner: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'User',
-      required: true,
+      default: null,
       immutable: true,
     },
     reference: { type: String, required: true, unique: true, immutable: true },

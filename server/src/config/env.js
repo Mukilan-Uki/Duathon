@@ -24,6 +24,12 @@ const result = z
     EMAIL_FROM: z.string().default('Duothan Bank <no-reply@duothan.local>'),
     TRANSFER_MIN_MINOR: z.coerce.number().int().positive().default(100),
     TRANSFER_MAX_MINOR: z.coerce.number().int().positive().default(100000000),
+    LOAN_MIN_MINOR: z.coerce.number().int().positive().default(100000),
+    LOAN_MAX_MINOR: z.coerce.number().int().positive().default(500000000),
+    LOAN_PERSONAL_RATE_BPS: z.coerce.number().int().min(0).max(10000).default(1200),
+    LOAN_EDUCATION_RATE_BPS: z.coerce.number().int().min(0).max(10000).default(800),
+    LOAN_HOME_RATE_BPS: z.coerce.number().int().min(0).max(10000).default(950),
+    LOAN_BUSINESS_RATE_BPS: z.coerce.number().int().min(0).max(10000).default(1400),
   })
   .safeParse(process.env);
 
@@ -37,6 +43,10 @@ export const env = result.data;
 
 if (env.TRANSFER_MIN_MINOR > env.TRANSFER_MAX_MINOR) {
   throw new Error('TRANSFER_MIN_MINOR cannot exceed TRANSFER_MAX_MINOR');
+}
+
+if (env.LOAN_MIN_MINOR > env.LOAN_MAX_MINOR) {
+  throw new Error('LOAN_MIN_MINOR cannot exceed LOAN_MAX_MINOR');
 }
 
 if (

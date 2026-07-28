@@ -10,6 +10,8 @@ Phase 4 adds MongoDB-transaction-backed transfers, idempotency protection, linke
 
 Phase 5 adds validated saved beneficiaries, owner-scoped removal, beneficiary management UI, and transfer-form integration.
 
+Phase 6 adds loan applications, staff review decisions, atomic approval/disbursement, integer repayment calculations, idempotent transactional loan payments, and customer/staff loan interfaces.
+
 ## Quick start
 
 Requirements: Node.js 20+, npm 10+, and optionally a MongoDB Atlas connection string.

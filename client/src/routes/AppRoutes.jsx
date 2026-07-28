@@ -8,11 +8,13 @@ import VerifyEmailPage from '../pages/auth/VerifyEmailPage';
 import ProfilePage from '../pages/customer/ProfilePage';
 import AccountsPage from '../pages/customer/AccountsPage';
 import BeneficiariesPage from '../pages/customer/BeneficiariesPage';
+import LoansPage from '../pages/customer/LoansPage';
 import ReceiptPage from '../pages/customer/ReceiptPage';
 import TransactionDetailsPage from '../pages/customer/TransactionDetailsPage';
 import TransactionHistoryPage from '../pages/customer/TransactionHistoryPage';
 import TransferPage from '../pages/customer/TransferPage';
 import AccountReviewPage from '../pages/employee/AccountReviewPage';
+import LoanReviewPage from '../pages/employee/LoanReviewPage';
 import HomePage from '../pages/HomePage';
 import NotFoundPage from '../pages/NotFoundPage';
 import ProtectedRoute from './ProtectedRoute';
@@ -34,6 +36,7 @@ export default function AppRoutes() {
         <Route element={<ProtectedRoute roles={['customer']} />}>
           <Route path="accounts" element={<AccountsPage />} />
           <Route path="beneficiaries" element={<BeneficiariesPage />} />
+          <Route path="loans" element={<LoansPage />} />
           <Route path="transfer" element={<TransferPage />} />
           <Route path="transactions" element={<TransactionHistoryPage />} />
           <Route path="transactions/:transactionId" element={<TransactionDetailsPage />} />
@@ -41,6 +44,7 @@ export default function AppRoutes() {
         </Route>
         <Route element={<ProtectedRoute roles={['employee', 'admin']} />}>
           <Route path="account-reviews" element={<AccountReviewPage />} />
+          <Route path="loan-reviews" element={<LoanReviewPage />} />
         </Route>
         <Route path="*" element={<NotFoundPage />} />
       </Route>
