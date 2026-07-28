@@ -56,3 +56,18 @@ if (
 ) {
   throw new Error('Production requires unique JWT_ACCESS_SECRET and JWT_REFRESH_SECRET values');
 }
+
+if (env.NODE_ENV === 'production' && !env.MONGODB_URI) {
+  throw new Error('Production requires MONGODB_URI');
+}
+
+if (env.NODE_ENV === 'production' && !env.CLIENT_URL.startsWith('https://')) {
+  throw new Error('Production CLIENT_URL must use HTTPS');
+}
+
+if (
+  env.NODE_ENV === 'production' &&
+  (!env.SMTP_HOST || !env.EMAIL_FROM || env.EMAIL_FROM.includes('duothan.local'))
+) {
+  throw new Error('Production requires SMTP_HOST and a verified EMAIL_FROM address');
+}

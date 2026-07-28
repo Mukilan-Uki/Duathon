@@ -1,24 +1,47 @@
 # Duothan Banking Platform
 
-A secure digital-banking platform rebuilt for Duothan 6.0 – Phase 02. This monorepo contains a React client and an Express/MongoDB API. Phase 1 establishes project tooling, health monitoring, security middleware, responsive routing, and documentation.
+A secure full-stack digital banking platform built for **Duothan 6.0 – Phase 02: REBUILD**. The project demonstrates customer banking, employee operations, administrator governance, transactional financial processing, layered security, testing, and production deployment in a JavaScript monorepo.
 
-Phase 2 adds customer registration, email verification, login/logout, protected routes, refresh-token rotation, role authorization, password recovery, account lockout, and login history.
+## Features
 
-Phase 3 adds Savings and Current account applications, backend-generated account numbers, customer account views, staff approval, status management, and immutable decision audit records.
+### Customer
 
-Phase 4 adds MongoDB-transaction-backed transfers, idempotency protection, linked sender/receiver records, configurable limits, searchable transaction history, details, and printable receipts.
+- Registration, email verification, secure login, refresh-token rotation, logout, and password recovery
+- Savings and Current account applications
+- Available balances and account-status tracking
+- Transactional account-to-account transfers with idempotency protection
+- Searchable and paginated transaction history with printable receipts
+- Saved beneficiaries
+- Loan applications, status tracking, repayment schedules, and idempotent payments
+- Dashboard analytics, notifications, login history, and notification preferences
 
-Phase 5 adds validated saved beneficiaries, owner-scoped removal, beneficiary management UI, and transfer-form integration.
+### Employee
 
-Phase 7 adds responsive, role-specific dashboards backed by read-only MongoDB analytics. Customers see balances, cash flow, loans, accounts, and recent transactions; employees see operational workload and high-value activity; administrators see bank-wide user and transfer trends.
+- Operational dashboard and assigned-customer totals
+- Account and loan application review
+- Account activation and suspension
+- Transaction monitoring, suspicious-activity flags, and investigation notes
+- Historical loan decisions without deleting financial records
 
-Phase 8 adds preference-aware customer notifications, login-history visibility, employee transaction investigations, immutable administrator audit-log browsing, and audited system settings. Stored transfer and loan limits are applied by backend financial services with environment defaults as a fallback.
+### Administrator
 
-Phase 9 hardens the platform with safer error classification, additional authorization and error tests, accessible keyboard workflows, reduced-motion support, a client error boundary, and route-level code splitting. See `docs/QUALITY.md` for the quality gate and manual release checklist.
+- Bank-wide dashboard analytics
+- Account and loan operational access
+- Suspicious-activity monitoring
+- Immutable audit-log browser
+- Validated and audited transaction, loan, account, and security settings
+
+## Technology
+
+- **Client:** React 19, Vite, React Router, Axios, Tailwind CSS, Recharts, React Hook Form, Zod
+- **Server:** Node.js, Express, Mongoose, JWT, bcrypt, Helmet, CORS, rate limiting
+- **Database:** MongoDB Atlas with transactions for financial operations
+- **Quality:** ESLint, Prettier, Vitest, Testing Library, Supertest
+- **Deployment:** Netlify client, Render API, MongoDB Atlas
 
 ## Quick start
 
-Requirements: Node.js 20+, npm 10+, and optionally a MongoDB Atlas connection string.
+Requirements: Node.js 20+, npm 10+, and a MongoDB deployment that supports transactions.
 
 ```bash
 npm install
@@ -27,7 +50,20 @@ copy client\.env.example client\.env
 npm run dev
 ```
 
-On macOS/Linux use `cp` instead of `copy`. Open `http://localhost:5173`; the API health endpoint is `http://localhost:5000/api/health`. Add `MONGODB_URI` to `server/.env` for MongoDB. Never commit `.env` files.
+On macOS or Linux, use `cp` instead of `copy`. Set a valid `MONGODB_URI` in `server/.env`, then open `http://localhost:5173`. The API health endpoint is `http://localhost:5000/api/health`.
+
+Never commit `.env` files or real credentials.
+
+## Demo data
+
+Demo seeding is intentionally blocked in production and requires an explicit password:
+
+```bash
+# Add DEMO_SEED_PASSWORD with at least 12 characters to server/.env
+npm run seed:demo
+```
+
+The idempotent seed creates verified Customer, Employee, and Administrator users plus an active customer savings account. Demo email addresses are printed after a successful seed. Use demo data only in local or dedicated test databases.
 
 ## Commands
 
@@ -39,12 +75,49 @@ npm run build
 npm run lint
 npm run format:check
 npm test
+npm run seed:demo
 ```
 
-## Repository and documentation
+## Project layout
 
-- `client/` – React application
-- `server/` – Express API
-- `docs/` – [API](docs/API.md), [architecture](docs/ARCHITECTURE.md), [security](docs/SECURITY.md), and [user guide](docs/USER_GUIDE.md)
+```text
+client/                 React application
+  src/components/       Shared UI and banking components
+  src/pages/            Role-specific pages
+  src/services/         API clients
+server/
+  src/controllers/      HTTP request orchestration
+  src/middleware/       Authentication, validation, and error handling
+  src/models/           Mongoose schemas
+  src/routes/           REST routes
+  src/services/         Banking and financial business logic
+  src/scripts/          Controlled operational scripts
+  src/tests/            API and unit tests
+docs/                   API, architecture, security, quality, and user guides
+```
 
-Deploy `client/` to Netlify with `npm run build` and `dist`. Deploy `server/` to Render with `npm start`. Configure variables from each `.env.example` in the provider. Screenshots will be added after deployment.
+## Documentation
+
+- [API reference](docs/API.md)
+- [Architecture](docs/ARCHITECTURE.md)
+- [Security](docs/SECURITY.md)
+- [Quality assurance](docs/QUALITY.md)
+- [User guide](docs/USER_GUIDE.md)
+- [Deployment guide](docs/DEPLOYMENT.md)
+- [Final submission checklist](docs/SUBMISSION_CHECKLIST.md)
+
+## Screenshots
+
+Add final deployed screenshots to `docs/screenshots/` before submission:
+
+- Public home and authentication
+- Customer dashboard and transfer confirmation
+- Employee review and monitoring
+- Administrator dashboard and audit controls
+- Responsive mobile dashboard
+
+Do not capture real customer information, access tokens, OTPs, or credentials.
+
+## Deployment
+
+The repository includes `netlify.toml` and `render.yaml`. Follow the [deployment guide](docs/DEPLOYMENT.md) to configure provider variables, Atlas access, CORS, health checks, and post-deployment verification.

@@ -7,6 +7,7 @@
   "scripts": {
     "dev": "node --watch src/server.js",
     "start": "node src/server.js",
+    "seed:demo": "node src/scripts/seedDemo.js --confirm-demo-data",
     "lint": "eslint . --max-warnings 0",
     "test": "cross-env NODE_ENV=test vitest run"
   },

@@ -13,6 +13,7 @@
     "build": "npm run build -w client",
     "lint": "npm run lint -w client && npm run lint -w server",
     "test": "npm run test -w client && npm run test -w server",
+    "seed:demo": "npm run seed:demo -w server",
     "format": "prettier --write .",
     "format:check": "prettier --check ."
   },

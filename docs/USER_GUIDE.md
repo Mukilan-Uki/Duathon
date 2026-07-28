@@ -24,6 +24,10 @@ Employees use **Monitoring** to review recent transactions, flag activity, and a
 
 Keyboard users can use the **Skip to main content** link when it appears on focus. All primary workflows expose visible focus indicators, and operating-system reduced-motion preferences are respected. If an unexpected display failure occurs, the recovery page confirms that banking data was not changed and offers a safe reload action.
 
+## Demo roles
+
+The controlled local seed creates one Customer, Employee, and Administrator identity. Run it only against a dedicated development database using the instructions in the README. All three accounts use the locally supplied `DEMO_SEED_PASSWORD`; the password is never stored in source control. Demo credentials must not be enabled or shared for a production deployment.
+
 ## Bank accounts
 
 Customers open **Accounts**, select Savings or Current, and submit an application. New applications are pending with a zero balance. Employees or administrators open **Reviews**, enter a review note, and approve or reject the request. Approved accounts become active; rejected accounts are closed and retained.
