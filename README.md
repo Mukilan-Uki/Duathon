@@ -8,6 +8,8 @@ Phase 3 adds Savings and Current account applications, backend-generated account
 
 Phase 4 adds MongoDB-transaction-backed transfers, idempotency protection, linked sender/receiver records, configurable limits, searchable transaction history, details, and printable receipts.
 
+Phase 5 adds validated saved beneficiaries, owner-scoped removal, beneficiary management UI, and transfer-form integration.
+
 ## Quick start
 
 Requirements: Node.js 20+, npm 10+, and optionally a MongoDB Atlas connection string.

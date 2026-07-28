@@ -7,6 +7,7 @@ import ResetPasswordPage from '../pages/auth/ResetPasswordPage';
 import VerifyEmailPage from '../pages/auth/VerifyEmailPage';
 import ProfilePage from '../pages/customer/ProfilePage';
 import AccountsPage from '../pages/customer/AccountsPage';
+import BeneficiariesPage from '../pages/customer/BeneficiariesPage';
 import ReceiptPage from '../pages/customer/ReceiptPage';
 import TransactionDetailsPage from '../pages/customer/TransactionDetailsPage';
 import TransactionHistoryPage from '../pages/customer/TransactionHistoryPage';
@@ -32,6 +33,7 @@ export default function AppRoutes() {
         </Route>
         <Route element={<ProtectedRoute roles={['customer']} />}>
           <Route path="accounts" element={<AccountsPage />} />
+          <Route path="beneficiaries" element={<BeneficiariesPage />} />
           <Route path="transfer" element={<TransferPage />} />
           <Route path="transactions" element={<TransactionHistoryPage />} />
           <Route path="transactions/:transactionId" element={<TransactionDetailsPage />} />

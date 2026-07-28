@@ -29,7 +29,13 @@ export default function AppLayout() {
                     <Link className="hidden font-medium text-slate-700 md:block" to="/transfer">
                       Transfer
                     </Link>
-                    <Link className="hidden font-medium text-slate-700 lg:block" to="/transactions">
+                    <Link
+                      className="hidden font-medium text-slate-700 lg:block"
+                      to="/beneficiaries"
+                    >
+                      Beneficiaries
+                    </Link>
+                    <Link className="hidden font-medium text-slate-700 xl:block" to="/transactions">
                       Transactions
                     </Link>
                   </>

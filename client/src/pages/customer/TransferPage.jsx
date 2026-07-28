@@ -3,12 +3,15 @@ import { useForm } from 'react-hook-form';
 import Alert from '../../components/common/Alert';
 import ConfirmationModal from '../../components/common/ConfirmationModal';
 import { accountService } from '../../services/accountService';
+import { beneficiaryService } from '../../services/beneficiaryService';
 import { transactionService } from '../../services/transactionService';
 import { getApiError } from '../../utils/apiError';
 import { formatMinorUnits, parseMajorUnitsToMinor } from '../../utils/money';
 
 export default function TransferPage() {
   const [accounts, setAccounts] = useState([]);
+  const [beneficiaries, setBeneficiaries] = useState([]);
+  const [selectedBeneficiary, setSelectedBeneficiary] = useState('');
   const [pending, setPending] = useState(null);
   const [busy, setBusy] = useState(false);
   const [apiError, setApiError] = useState('');
@@ -17,15 +20,20 @@ export default function TransferPage() {
     register,
     handleSubmit,
     reset,
+    setValue,
     formState: { errors },
   } = useForm();
 
   useEffect(() => {
-    accountService
-      .getMine()
-      .then(({ data }) =>
-        setAccounts(data.accounts.filter((account) => account.status === 'active')),
-      )
+    Promise.all([accountService.getMine(), beneficiaryService.list()])
+      .then(([accountResponse, beneficiaryResponse]) => {
+        setAccounts(accountResponse.data.accounts.filter((account) => account.status === 'active'));
+        setBeneficiaries(
+          beneficiaryResponse.data.beneficiaries.filter(
+            (beneficiary) => beneficiary.beneficiaryAccount?.status === 'active',
+          ),
+        );
+      })
       .catch((error) => setApiError(getApiError(error)));
   }, []);
 
@@ -61,6 +69,7 @@ export default function TransferPage() {
       setNotice(`${response.message}. Reference: ${response.data.transaction.transferReference}`);
       setPending(null);
       reset();
+      setSelectedBeneficiary('');
       const refreshed = await accountService.getMine();
       setAccounts(refreshed.data.accounts.filter((account) => account.status === 'active'));
     } catch (error) {
@@ -102,6 +111,31 @@ export default function TransferPage() {
                 {errors.senderAccountId.message}
               </span>
             )}
+          </label>
+          <label className="block">
+            <span className="text-sm font-medium text-slate-700">Saved beneficiary (optional)</span>
+            <select
+              className="mt-2 w-full rounded-lg border border-slate-300 px-3.5 py-2.5"
+              value={selectedBeneficiary}
+              onChange={(event) => {
+                const selected = beneficiaries.find(
+                  (beneficiary) => beneficiary._id === event.target.value,
+                );
+                setSelectedBeneficiary(event.target.value);
+                if (selected) {
+                  setValue('receiverAccountNumber', selected.accountNumber, {
+                    shouldValidate: true,
+                  });
+                }
+              }}
+            >
+              <option value="">Enter an account manually</option>
+              {beneficiaries.map((beneficiary) => (
+                <option value={beneficiary._id} key={beneficiary._id}>
+                  {beneficiary.nickname} · {beneficiary.accountNumber}
+                </option>
+              ))}
+            </select>
           </label>
           <label className="block">
             <span className="text-sm font-medium text-slate-700">Receiver account number</span>

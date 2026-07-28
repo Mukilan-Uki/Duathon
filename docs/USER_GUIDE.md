@@ -21,3 +21,7 @@ Customers open **Accounts**, select Savings or Current, and submit an applicatio
 Open **Transfer**, select an active sender account, enter the receiver’s 12-digit account number, amount, and description, then review the confirmation dialog. Do not close the page while a request is processing; safe retries use the same request key.
 
 Open **Transactions** to search by reference, description, or counterparty account and filter by direction, status, or date. Select **Details** for the balance snapshot and receipt. The receipt page can be printed or saved as PDF through the browser.
+
+## Beneficiaries
+
+Open **Beneficiaries**, enter a nickname and another customer’s active 12-digit account number, and choose **Save beneficiary**. Saved beneficiaries appear as optional recipients on the Transfer page. Removing one does not alter previous transactions.

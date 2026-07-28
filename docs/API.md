@@ -60,3 +60,15 @@ Transfer requests require an `Idempotency-Key` header containing 8–128 letters
 ```
 
 History accepts `search`, `direction`, `type`, `status`, `dateFrom`, `dateTo`, `page`, and `limit`. Dates use `YYYY-MM-DD`.
+
+## Beneficiaries
+
+All beneficiary endpoints require an authenticated customer.
+
+| Method | Endpoint                        | Purpose                                      |
+| ------ | ------------------------------- | -------------------------------------------- |
+| POST   | `/beneficiaries`                | Validate and save an active external account |
+| GET    | `/beneficiaries`                | List the customer’s saved beneficiaries      |
+| DELETE | `/beneficiaries/:beneficiaryId` | Remove an owned beneficiary preference       |
+
+Creation accepts a 12-digit `accountNumber` and a 2–60 character `nickname`. The server resolves the account and stores the registered account name; it rejects inactive, self-owned, nonexistent, and duplicate accounts.
