@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
+import { useNavigate } from 'react-router-dom';
 import Alert from '../../components/common/Alert';
 import ConfirmationModal from '../../components/common/ConfirmationModal';
 import { accountService } from '../../services/accountService';
@@ -9,19 +10,18 @@ import { getApiError } from '../../utils/apiError';
 import { formatMinorUnits, parseMajorUnitsToMinor } from '../../utils/money';
 
 export default function TransferPage() {
+  const navigate = useNavigate();
   const [accounts, setAccounts] = useState([]);
   const [beneficiaries, setBeneficiaries] = useState([]);
   const [selectedBeneficiary, setSelectedBeneficiary] = useState('');
   const [pending, setPending] = useState(null);
   const [busy, setBusy] = useState(false);
   const [apiError, setApiError] = useState('');
-  const [notice, setNotice] = useState('');
   const {
     register,
     handleSubmit,
-    reset,
     setValue,
-    formState: { errors },
+    formState: { errors, isSubmitting },
   } = useForm();
 
   useEffect(() => {
@@ -37,23 +37,27 @@ export default function TransferPage() {
       .catch((error) => setApiError(getApiError(error)));
   }, []);
 
-  const prepare = (values) => {
+  const prepare = async (values) => {
     setApiError('');
-    setNotice('');
     try {
       const amountMinor = parseMajorUnitsToMinor(values.amount);
       const sender = accounts.find((account) => account._id === values.senderAccountId);
       if (!sender) throw new Error('Select an active sender account');
-      if (sender.accountNumber === values.receiverAccountNumber)
-        throw new Error('Sender and receiver accounts must be different');
+      const recipientResponse = await transactionService.validateRecipient(
+        values.receiverAccountNumber,
+      );
+      if (!recipientResponse.data.recipient.canReceiveTransfers) {
+        throw new Error('The recipient account cannot receive transfers');
+      }
       setPending({
         payload: {
           senderAccountId: values.senderAccountId,
           receiverAccountNumber: values.receiverAccountNumber,
-          amountMinor,
+          amount: amountMinor,
           description: values.description || '',
         },
         sender,
+        recipient: recipientResponse.data.recipient,
         idempotencyKey: crypto.randomUUID(),
       });
     } catch (error) {
@@ -66,12 +70,10 @@ export default function TransferPage() {
     setApiError('');
     try {
       const response = await transactionService.transfer(pending.payload, pending.idempotencyKey);
-      setNotice(`${response.message}. Reference: ${response.data.transaction.transferReference}`);
-      setPending(null);
-      reset();
-      setSelectedBeneficiary('');
-      const refreshed = await accountService.getMine();
-      setAccounts(refreshed.data.accounts.filter((account) => account.status === 'active'));
+      navigate('/transfer/result', {
+        replace: true,
+        state: { transaction: response.data.transaction, message: response.message },
+      });
     } catch (error) {
       setApiError(getApiError(error, 'Transfer could not be completed'));
     } finally {
@@ -91,7 +93,6 @@ export default function TransferPage() {
       <section className="mt-8 rounded-2xl border border-slate-200 bg-white p-6 shadow-card sm:p-8">
         <form className="space-y-5" onSubmit={handleSubmit(prepare)} noValidate>
           {apiError && <Alert>{apiError}</Alert>}
-          {notice && <Alert type="success">{notice}</Alert>}
           <label className="block">
             <span className="text-sm font-medium text-slate-700">From account</span>
             <select
@@ -101,7 +102,7 @@ export default function TransferPage() {
               <option value="">Select an account</option>
               {accounts.map((account) => (
                 <option value={account._id} key={account._id}>
-                  {account.accountNumber} ·{' '}
+                  {account.maskedAccountNumber} ·{' '}
                   {formatMinorUnits(account.availableBalanceMinor, account.currency)}
                 </option>
               ))}
@@ -176,9 +177,9 @@ export default function TransferPage() {
           </label>
           <button
             className="w-full rounded-lg bg-bank-700 px-4 py-3 font-semibold text-white disabled:opacity-60"
-            disabled={!accounts.length}
+            disabled={!accounts.length || isSubmitting}
           >
-            Review transfer
+            {isSubmitting ? 'Validating recipient…' : 'Review transfer'}
           </button>
           {!accounts.length && (
             <p className="text-center text-sm text-amber-700">
@@ -198,16 +199,21 @@ export default function TransferPage() {
           <dl className="space-y-2">
             <div className="flex justify-between gap-4">
               <dt>From</dt>
-              <dd className="font-mono">{pending.sender.accountNumber}</dd>
+              <dd className="font-mono">{pending.sender.maskedAccountNumber}</dd>
             </div>
             <div className="flex justify-between gap-4">
               <dt>To</dt>
-              <dd className="font-mono">{pending.payload.receiverAccountNumber}</dd>
+              <dd className="font-mono">
+                {pending.recipient.accountHolderName} · {pending.recipient.accountNumber}
+              </dd>
             </div>
             <div className="flex justify-between gap-4">
               <dt>Amount</dt>
-              <dd className="font-semibold">{formatMinorUnits(pending.payload.amountMinor)}</dd>
+              <dd className="font-semibold">{formatMinorUnits(pending.payload.amount)}</dd>
             </div>
+            <p className="pt-3 text-amber-700">
+              Completed transfers cannot normally be cancelled.
+            </p>
           </dl>
         )}
       </ConfirmationModal>

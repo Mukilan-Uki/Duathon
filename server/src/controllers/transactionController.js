@@ -2,7 +2,9 @@ import {
   getTransactionForUser,
   listTransactions,
   transferMoney,
+  validateRecipient,
 } from '../services/transactionService.js';
+import { createAuditLog } from '../services/auditService.js';
 import { successResponse } from '../utils/apiResponse.js';
 
 function metadata(req) {
@@ -13,12 +15,17 @@ export async function transfer(req, res) {
   const result = await transferMoney(req.user._id, req.body, req.idempotencyKey, metadata(req));
   return successResponse(res, {
     statusCode: result.duplicate ? 200 : 201,
-    message: result.duplicate ? 'Transfer already completed' : 'Transfer completed successfully',
+    message: result.duplicate ? 'Transfer request already processed' : 'Transfer completed successfully',
     data: {
       transaction: result.transaction,
       duplicate: result.duplicate,
     },
   });
+}
+
+export async function recipient(req, res) {
+  const recipientAccount = await validateRecipient(req.body.accountNumber);
+  return successResponse(res, { data: { recipient: recipientAccount } });
 }
 
 export async function history(req, res) {
@@ -39,11 +46,31 @@ export async function monitor(req, res) {
 
 export async function details(req, res) {
   const transaction = await getTransactionForUser(req.params.transactionId, req.user);
+  if (req.user.role !== 'customer') {
+    await createAuditLog({
+      actor: req.user._id,
+      action: 'TRANSACTION_VIEWED',
+      targetType: 'Transaction',
+      targetId: req.params.transactionId,
+      before: null,
+      after: null,
+      metadata: metadata(req),
+    });
+  }
   return successResponse(res, { data: { transaction } });
 }
 
 export async function receipt(req, res) {
   const transaction = await getTransactionForUser(req.params.transactionId, req.user);
+  await createAuditLog({
+    actor: req.user._id,
+    action: 'TRANSACTION_RECEIPT_ACCESSED',
+    targetType: 'Transaction',
+    targetId: req.params.transactionId,
+    before: null,
+    after: null,
+    metadata: metadata(req),
+  });
   return successResponse(res, {
     message: 'Receipt generated successfully',
     data: {
@@ -51,13 +78,14 @@ export async function receipt(req, res) {
         bank: 'Duothan Bank',
         transactionId: transaction._id,
         reference: transaction.reference,
-        transferReference: transaction.transferReference,
-        date: transaction.createdAt,
+        date: transaction.completedAt || transaction.initiatedAt,
         direction: transaction.direction,
-        amountMinor: transaction.amountMinor,
+        amount: transaction.amount,
+        amountMinor: transaction.amount,
         currency: transaction.currency,
         description: transaction.description,
-        counterpartyAccountNumber: transaction.counterpartyAccountNumber,
+        senderAccount: transaction.senderAccount,
+        receiverAccount: transaction.receiverAccount,
         status: transaction.status,
       },
     },

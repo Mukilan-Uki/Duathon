@@ -6,7 +6,15 @@ import { transactionService } from '../../services/transactionService';
 import { getApiError } from '../../utils/apiError';
 import { formatMinorUnits } from '../../utils/money';
 
-const initialFilters = { search: '', direction: '', status: '', dateFrom: '', dateTo: '' };
+const initialFilters = {
+  search: '',
+  direction: '',
+  type: '',
+  status: '',
+  dateFrom: '',
+  dateTo: '',
+  sort: 'newest',
+};
 
 export default function TransactionHistoryPage() {
   const [formFilters, setFormFilters] = useState(initialFilters);
@@ -63,7 +71,7 @@ export default function TransactionHistoryPage() {
       </div>
 
       <form
-        className="mt-8 grid gap-3 rounded-2xl border border-slate-200 bg-white p-5 shadow-card md:grid-cols-6"
+        className="mt-8 grid gap-3 rounded-2xl border border-slate-200 bg-white p-5 shadow-card md:grid-cols-8"
         onSubmit={applyFilters}
       >
         <input
@@ -86,6 +94,20 @@ export default function TransactionHistoryPage() {
           <option value="">All directions</option>
           <option value="sent">Sent</option>
           <option value="received">Received</option>
+        </select>
+        <select
+          aria-label="Transaction type"
+          className="rounded-lg border border-slate-300 px-3 py-2"
+          value={formFilters.type}
+          onChange={(event) =>
+            setFormFilters((current) => ({ ...current, type: event.target.value }))
+          }
+        >
+          <option value="">All types</option>
+          <option value="transfer">Transfer</option>
+          <option value="deposit">Deposit</option>
+          <option value="withdrawal">Withdrawal</option>
+          <option value="reversal">Reversal</option>
         </select>
         <select
           aria-label="Status"
@@ -118,7 +140,18 @@ export default function TransactionHistoryPage() {
             setFormFilters((current) => ({ ...current, dateTo: event.target.value }))
           }
         />
-        <button className="rounded-lg bg-slate-900 px-4 py-2 font-semibold text-white md:col-start-6">
+        <select
+          aria-label="Sort order"
+          className="rounded-lg border border-slate-300 px-3 py-2"
+          value={formFilters.sort}
+          onChange={(event) =>
+            setFormFilters((current) => ({ ...current, sort: event.target.value }))
+          }
+        >
+          <option value="newest">Newest first</option>
+          <option value="oldest">Oldest first</option>
+        </select>
+        <button className="rounded-lg bg-slate-900 px-4 py-2 font-semibold text-white">
           Apply filters
         </button>
       </form>
@@ -148,7 +181,7 @@ export default function TransactionHistoryPage() {
                 {transactions.map((transaction) => (
                   <tr className="border-t border-slate-100" key={transaction._id}>
                     <td className="whitespace-nowrap px-5 py-4">
-                      {new Date(transaction.createdAt).toLocaleString()}
+                      {new Date(transaction.initiatedAt || transaction.createdAt).toLocaleString()}
                     </td>
                     <td className="px-5 py-4 font-mono text-xs">{transaction.transferReference}</td>
                     <td className="px-5 py-4 font-mono">{transaction.counterpartyAccountNumber}</td>

@@ -1,7 +1,7 @@
 import { AppError } from '../utils/AppError.js';
 
 export function requireIdempotencyKey(req, _res, next) {
-  const key = req.get('idempotency-key');
+  const key = req.get('idempotency-key') || req.body?.idempotencyKey;
   if (!key || !/^[A-Za-z0-9_-]{8,128}$/.test(key)) {
     return next(
       new AppError(

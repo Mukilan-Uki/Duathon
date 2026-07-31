@@ -7,12 +7,14 @@ import healthRoutes from './healthRoutes.js';
 import loanRoutes from './loanRoutes.js';
 import operationsRoutes from './operationsRoutes.js';
 import transactionRoutes from './transactionRoutes.js';
+import transferRoutes from './transferRoutes.js';
 
 const router = Router();
 router.use('/health', healthRoutes);
 router.use('/auth', authRoutes);
 router.use('/accounts', accountRoutes);
 router.use('/transactions', transactionRoutes);
+router.use('/transfers', transferRoutes);
 router.use('/beneficiaries', beneficiaryRoutes);
 router.use('/loans', loanRoutes);
 router.use('/dashboards', dashboardRoutes);

@@ -2,6 +2,7 @@ import 'dotenv/config';
 import bcrypt from 'bcrypt';
 import { connectDatabase, disconnectDatabase } from '../config/database.js';
 import Account from '../models/Account.js';
+import SystemSetting from '../models/SystemSetting.js';
 import User from '../models/User.js';
 
 const confirmed = process.argv.includes('--confirm-demo-data');
@@ -19,6 +20,7 @@ if (!password || password.length < 12) {
 
 const people = [
   {
+    key: 'customer',
     email: 'customer.demo@duothan.local',
     firstName: 'Demo',
     lastName: 'Customer',
@@ -26,6 +28,15 @@ const people = [
     phoneNumber: '+94770000001',
   },
   {
+    key: 'customer2',
+    email: 'customer2.demo@duothan.local',
+    firstName: 'Second',
+    lastName: 'Customer',
+    role: 'customer',
+    phoneNumber: '+94770000004',
+  },
+  {
+    key: 'employee',
     email: 'employee.demo@duothan.local',
     firstName: 'Demo',
     lastName: 'Employee',
@@ -33,6 +44,7 @@ const people = [
     phoneNumber: '+94770000002',
   },
   {
+    key: 'admin',
     email: 'admin.demo@duothan.local',
     firstName: 'Demo',
     lastName: 'Administrator',
@@ -47,11 +59,15 @@ async function seed() {
   const users = {};
 
   for (const person of people) {
-    users[person.role] = await User.findOneAndUpdate(
+    users[person.key] = await User.findOneAndUpdate(
       { email: person.email },
       {
         $set: {
-          ...person,
+          email: person.email,
+          firstName: person.firstName,
+          lastName: person.lastName,
+          role: person.role,
+          phoneNumber: person.phoneNumber,
           password: passwordHash,
           accountStatus: 'active',
           isEmailVerified: true,
@@ -83,8 +99,46 @@ async function seed() {
     },
     { upsert: true, runValidators: true },
   );
+  await Account.findOneAndUpdate(
+    { owner: users.customer2._id, accountType: 'savings' },
+    {
+      $setOnInsert: {
+        accountNumber: '699900000002',
+        branchCode: 'CMB01',
+        createdBy: users.admin._id,
+        approvedBy: users.admin._id,
+        approvedAt: new Date(),
+        currency: 'LKR',
+        ledgerBalanceMinor: 500000,
+        availableBalanceMinor: 500000,
+      },
+      $set: { status: 'active' },
+    },
+    { upsert: true, runValidators: true },
+  );
 
-  console.info('Demo users and customer savings account are ready.');
+  const settings = [
+    ['transfer_min_minor', 100, 'Minimum internal transfer amount'],
+    ['transfer_max_minor', 100000000, 'Maximum amount per internal transfer'],
+    ['transfer_daily_limit_minor', 250000000, 'Maximum daily outgoing transfer amount'],
+    ['transfer_max_per_day', 25, 'Maximum outgoing transfers per day'],
+  ];
+  for (const [key, value, description] of settings) {
+    await SystemSetting.findOneAndUpdate(
+      { key },
+      {
+        $set: {
+          category: 'transactions',
+          value,
+          description,
+          updatedBy: users.admin._id,
+        },
+      },
+      { upsert: true, runValidators: true },
+    );
+  }
+
+  console.info('DEVELOPMENT ONLY: demo users, two funded accounts, and transfer limits are ready.');
   console.info(people.map((person) => person.email).join('\n'));
 }
 

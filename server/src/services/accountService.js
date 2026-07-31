@@ -1,4 +1,5 @@
 import Account from '../models/Account.js';
+import Transaction from '../models/Transaction.js';
 import { AppError } from '../utils/AppError.js';
 import { generateUniqueAccountNumber } from '../utils/accountNumber.js';
 import { createAuditLog } from './auditService.js';
@@ -160,8 +161,15 @@ export async function rejectAccount(accountId, reviewer, reason, metadata) {
   return presentAccount(account, reviewer.role);
 }
 
-export async function validateAccountClosure(_account) {
-  // Phase 3 placeholder: future phases must check unsettled transfers, loans, holds, and disputes.
+export async function validateAccountClosure(account) {
+  const unresolvedTransfer = await Transaction.exists({
+    $or: [{ senderAccount: account._id }, { receiverAccount: account._id }],
+    status: { $in: ['pending', 'processing'] },
+  });
+  if (unresolvedTransfer) {
+    throw new AppError('Account cannot be closed while a transfer is unresolved', 409);
+  }
+  // Future phases must also check loans, holds, and disputes.
   return true;
 }
 

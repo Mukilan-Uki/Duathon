@@ -9,6 +9,12 @@ const transactionSchema = new mongoose.Schema(
       index: true,
       immutable: true,
     },
+    senderUser: { type: mongoose.Schema.Types.ObjectId, ref: 'User', index: true },
+    receiverUser: { type: mongoose.Schema.Types.ObjectId, ref: 'User', index: true },
+    senderAccount: { type: mongoose.Schema.Types.ObjectId, ref: 'Account', index: true },
+    receiverAccount: { type: mongoose.Schema.Types.ObjectId, ref: 'Account', index: true },
+    senderAccountNumber: { type: String, select: false },
+    receiverAccountNumber: { type: String, select: false },
     account: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Account',
@@ -34,9 +40,29 @@ const transactionSchema = new mongoose.Schema(
     requestHash: { type: String, select: false, immutable: true },
     type: {
       type: String,
-      enum: ['transfer', 'deposit', 'withdrawal', 'loan_payment'],
+      enum: [
+        'transfer',
+        'deposit',
+        'withdrawal',
+        'loan_payment',
+        'loan_disbursement',
+        'loan_repayment',
+        'reversal',
+      ],
       required: true,
       immutable: true,
+      index: true,
+    },
+    transactionType: {
+      type: String,
+      enum: [
+        'transfer',
+        'deposit',
+        'withdrawal',
+        'loan_disbursement',
+        'loan_repayment',
+        'reversal',
+      ],
       index: true,
     },
     direction: {
@@ -56,19 +82,43 @@ const transactionSchema = new mongoose.Schema(
         message: 'Transaction amount must be an integer minor-unit value',
       },
     },
+    amount: {
+      type: Number,
+      min: 1,
+      validate: {
+        validator: (value) => value == null || Number.isSafeInteger(value),
+        message: 'Transaction amount must be an integer minor-unit value',
+      },
+    },
     currency: { type: String, enum: ['LKR'], default: 'LKR', immutable: true },
     status: {
       type: String,
-      enum: ['pending', 'completed', 'failed', 'reversed', 'cancelled'],
+      enum: ['pending', 'processing', 'completed', 'failed', 'reversed', 'cancelled'],
       required: true,
       index: true,
     },
     description: { type: String, trim: true, maxlength: 200, default: '', immutable: true },
+    failureReason: { type: String, trim: true, maxlength: 300, default: '' },
+    initiatedAt: { type: Date, default: Date.now },
+    completedAt: { type: Date, default: null },
+    failedAt: { type: Date, default: null },
+    reversedAt: { type: Date, default: null },
+    metadata: {
+      type: new mongoose.Schema(
+        {
+          ipAddress: { type: String, default: '' },
+          userAgent: { type: String, default: '', maxlength: 300 },
+        },
+        { _id: false },
+      ),
+      default: () => ({}),
+      select: false,
+    },
+    reversalOf: { type: mongoose.Schema.Types.ObjectId, ref: 'Transaction', default: null },
     balanceAfterMinor: {
       type: Number,
       required: true,
       min: 0,
-      immutable: true,
       validate: {
         validator: Number.isSafeInteger,
         message: 'Balance snapshot must be an integer minor-unit value',
@@ -98,5 +148,15 @@ transactionSchema.index(
 );
 transactionSchema.index({ owner: 1, createdAt: -1 });
 transactionSchema.index({ account: 1, createdAt: -1 });
+transactionSchema.index({ senderUser: 1, initiatedAt: -1 });
+transactionSchema.index({ receiverUser: 1, initiatedAt: -1 });
+transactionSchema.index({ senderUser: 1, idempotencyKey: 1 }, { sparse: true });
+
+transactionSchema.pre(
+  ['deleteOne', 'deleteMany', 'findOneAndDelete', 'findByIdAndDelete'],
+  function blockTransactionDeletion() {
+    throw new Error('Financial transactions cannot be deleted');
+  },
+);
 
 export default mongoose.model('Transaction', transactionSchema);

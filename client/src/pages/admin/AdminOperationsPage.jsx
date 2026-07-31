@@ -53,6 +53,8 @@ export default function AdminOperationsPage() {
               <option value="">Choose setting</option>
               <option value="transfer_min_minor">Minimum transfer (minor units)</option>
               <option value="transfer_max_minor">Maximum transfer (minor units)</option>
+              <option value="transfer_daily_limit_minor">Daily transfer limit (minor units)</option>
+              <option value="transfer_max_per_day">Maximum transfers per day</option>
               <option value="account_auto_approval">Account auto approval</option>
               <option value="loan_min_minor">Minimum loan (minor units)</option>
               <option value="loan_max_minor">Maximum loan (minor units)</option>

@@ -63,6 +63,8 @@ export const investigationSchema = z.object({
 const settingKeys = z.enum([
   'transfer_min_minor',
   'transfer_max_minor',
+  'transfer_daily_limit_minor',
+  'transfer_max_per_day',
   'account_auto_approval',
   'loan_min_minor',
   'loan_max_minor',
@@ -85,6 +87,8 @@ export const settingSchema = z.object({
       const requiredCategory = {
         transfer_min_minor: 'transactions',
         transfer_max_minor: 'transactions',
+        transfer_daily_limit_minor: 'transactions',
+        transfer_max_per_day: 'transactions',
         account_auto_approval: 'accounts',
         loan_min_minor: 'loans',
         loan_max_minor: 'loans',
