@@ -14,6 +14,8 @@ const otpSchema = new mongoose.Schema(
     maxAttempts: { type: Number, default: 5, select: false },
     expiresAt: { type: Date, required: true, index: { expires: 0 } },
     consumedAt: { type: Date, default: null },
+    resendCount: { type: Number, default: 0, select: false },
+    resendWindowStartedAt: { type: Date, default: Date.now, select: false },
   },
   { timestamps: true },
 );

@@ -18,6 +18,10 @@ export const registerSchema = z
     firstName: z.string().trim().min(2, 'Enter at least 2 characters'),
     lastName: z.string().trim().min(2, 'Enter at least 2 characters'),
     email: z.string().email('Enter a valid email address'),
+    phoneNumber: z
+      .string()
+      .trim()
+      .regex(/^\+?[1-9]\d{7,14}$/, 'Enter a valid international phone number'),
     password: passwordSchema,
     confirmPassword: z.string(),
   })
@@ -28,8 +32,7 @@ export const registerSchema = z
 
 export const resetSchema = z
   .object({
-    email: z.string().email('Enter a valid email address'),
-    code: z.string().regex(/^\d{6}$/, 'Enter the six-digit code'),
+    token: z.string().min(32, 'Enter a valid password reset token'),
     password: passwordSchema,
     confirmPassword: z.string(),
   })

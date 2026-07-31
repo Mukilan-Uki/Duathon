@@ -2,6 +2,7 @@ import { lazy, Suspense } from 'react';
 import { Navigate, Route, Routes } from 'react-router-dom';
 import AppLayout from '../layouts/AppLayout';
 import ProtectedRoute from './ProtectedRoute';
+import RoleProtectedRoute from './RoleProtectedRoute';
 
 const load = (path) => lazy(() => path());
 const HomePage = load(() => import('../pages/HomePage'));
@@ -51,7 +52,8 @@ export default function AppRoutes() {
           <Route element={<ProtectedRoute />}>
             <Route path="profile" element={<ProfilePage />} />
           </Route>
-          <Route element={<ProtectedRoute roles={['customer']} />}>
+          <Route element={<ProtectedRoute />}>
+            <Route element={<RoleProtectedRoute roles={['customer']} />}>
             <Route path="dashboard" element={<CustomerDashboardPage />} />
             <Route path="notifications" element={<NotificationsPage />} />
             <Route path="accounts" element={<AccountsPage />} />
@@ -61,18 +63,25 @@ export default function AppRoutes() {
             <Route path="transactions" element={<TransactionHistoryPage />} />
             <Route path="transactions/:transactionId" element={<TransactionDetailsPage />} />
             <Route path="transactions/:transactionId/receipt" element={<ReceiptPage />} />
+            </Route>
           </Route>
-          <Route element={<ProtectedRoute roles={['employee']} />}>
+          <Route element={<ProtectedRoute />}>
+            <Route element={<RoleProtectedRoute roles={['employee']} />}>
             <Route path="employee/dashboard" element={<EmployeeDashboardPage />} />
+            </Route>
           </Route>
-          <Route element={<ProtectedRoute roles={['admin']} />}>
+          <Route element={<ProtectedRoute />}>
+            <Route element={<RoleProtectedRoute roles={['admin']} />}>
             <Route path="admin/dashboard" element={<AdminDashboardPage />} />
             <Route path="admin/operations" element={<AdminOperationsPage />} />
+            </Route>
           </Route>
-          <Route element={<ProtectedRoute roles={['employee', 'admin']} />}>
+          <Route element={<ProtectedRoute />}>
+            <Route element={<RoleProtectedRoute roles={['employee', 'admin']} />}>
             <Route path="account-reviews" element={<AccountReviewPage />} />
             <Route path="loan-reviews" element={<LoanReviewPage />} />
             <Route path="transaction-monitoring" element={<TransactionMonitoringPage />} />
+            </Route>
           </Route>
           <Route path="*" element={<NotFoundPage />} />
         </Route>

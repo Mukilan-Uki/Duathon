@@ -39,3 +39,23 @@ export async function sendOtpEmail({ to, name, code, purpose }) {
   });
   return true;
 }
+
+export async function sendPasswordResetEmail({ to, name, token }) {
+  const resetUrl = `${env.CLIENT_URL}/reset-password?token=${encodeURIComponent(token)}`;
+  const mailer = getTransporter();
+  if (!mailer) {
+    if (env.NODE_ENV === 'development') {
+      console.info(`[development email only] Password reset link for ${to}: ${resetUrl}`);
+      return { developmentOnlyUrl: resetUrl };
+    }
+    console.error('SMTP is not configured; password reset email was not delivered.');
+    return false;
+  }
+  await mailer.sendMail({
+    from: env.EMAIL_FROM,
+    to,
+    subject: 'Reset your password - Duothan Bank',
+    text: `Hello ${name},\n\nReset your password using this time-limited link:\n${resetUrl}\n\nIf you did not request this, ignore this email.`,
+  });
+  return true;
+}

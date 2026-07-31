@@ -3,30 +3,38 @@ import mongoose from 'mongoose';
 
 const userSchema = new mongoose.Schema(
   {
-    firstName: { type: String, required: true, trim: true, maxlength: 60 },
-    lastName: { type: String, required: true, trim: true, maxlength: 60 },
+    firstName: { type: String, required: true, trim: true, minlength: 2, maxlength: 60 },
+    lastName: { type: String, required: true, trim: true, minlength: 2, maxlength: 60 },
     email: {
       type: String,
       required: true,
       unique: true,
       lowercase: true,
       trim: true,
+      maxlength: 254,
+      match: [/^[^\s@]+@[^\s@]+\.[^\s@]+$/, 'Please provide a valid email address'],
       index: true,
     },
-    passwordHash: { type: String, required: true, select: false },
+    password: { type: String, required: true, minlength: 12, select: false },
+    phoneNumber: {
+      type: String,
+      required: true,
+      trim: true,
+      match: [/^\+?[1-9]\d{7,14}$/, 'Please provide a valid phone number'],
+    },
     role: {
       type: String,
       enum: ['customer', 'employee', 'admin'],
       default: 'customer',
       index: true,
     },
-    status: {
+    accountStatus: {
       type: String,
       enum: ['pending', 'active', 'suspended'],
       default: 'pending',
       index: true,
     },
-    emailVerifiedAt: { type: Date, default: null },
+    isEmailVerified: { type: Boolean, default: false },
     failedLoginAttempts: { type: Number, default: 0, select: false },
     lockUntil: { type: Date, default: null, select: false },
     passwordChangedAt: { type: Date, default: null, select: false },
@@ -47,8 +55,9 @@ const userSchema = new mongoose.Schema(
   {
     timestamps: true,
     toJSON: {
+      virtuals: true,
       transform(_document, result) {
-        delete result.passwordHash;
+        delete result.password;
         delete result.failedLoginAttempts;
         delete result.lockUntil;
         delete result.passwordChangedAt;
@@ -63,12 +72,31 @@ userSchema.virtual('fullName').get(function fullName() {
   return `${this.firstName} ${this.lastName}`;
 });
 
-userSchema.methods.verifyPassword = function verifyPassword(password) {
-  return bcrypt.compare(password, this.passwordHash);
+userSchema.virtual('status')
+  .get(function getStatus() {
+    return this.accountStatus;
+  })
+  .set(function setStatus(value) {
+    this.accountStatus = value;
+  });
+
+userSchema.virtual('emailVerifiedAt').get(function getEmailVerifiedAt() {
+  return this.isEmailVerified ? this.updatedAt : null;
+});
+
+userSchema.pre('save', async function hashPassword() {
+  if (!this.isModified('password')) return;
+  this.password = await bcrypt.hash(this.password, 12);
+});
+
+userSchema.methods.comparePassword = function comparePassword(candidatePassword) {
+  return bcrypt.compare(candidatePassword, this.password);
 };
 
-userSchema.statics.hashPassword = function hashPassword(password) {
-  return bcrypt.hash(password, 12);
+userSchema.methods.verifyPassword = userSchema.methods.comparePassword;
+
+userSchema.methods.isLocked = function isLocked() {
+  return Boolean(this.lockUntil && this.lockUntil > new Date());
 };
 
 export default mongoose.model('User', userSchema);

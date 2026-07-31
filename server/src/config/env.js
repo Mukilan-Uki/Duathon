@@ -13,6 +13,9 @@ const result = z
     JWT_REFRESH_EXPIRES_IN: z.string().default('7d'),
     REFRESH_COOKIE_DAYS: z.coerce.number().int().positive().default(7),
     OTP_EXPIRES_MINUTES: z.coerce.number().int().positive().max(60).default(15),
+    VERIFICATION_RESEND_LIMIT: z.coerce.number().int().positive().default(3),
+    VERIFICATION_RESEND_WINDOW_MINUTES: z.coerce.number().int().positive().default(60),
+    PASSWORD_RESET_EXPIRES_MINUTES: z.coerce.number().int().positive().max(60).default(15),
     SMTP_HOST: z.string().optional().default(''),
     SMTP_PORT: z.coerce.number().int().positive().default(587),
     SMTP_SECURE: z

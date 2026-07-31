@@ -66,6 +66,14 @@ export default function RegisterPage() {
           error={errors.email?.message}
         />
         <FormField
+          label="Phone number"
+          type="tel"
+          autoComplete="tel"
+          placeholder="+94771234567"
+          {...register('phoneNumber')}
+          error={errors.phoneNumber?.message}
+        />
+        <FormField
           label="Password"
           type="password"
           autoComplete="new-password"

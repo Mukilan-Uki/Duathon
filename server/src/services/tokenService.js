@@ -46,7 +46,7 @@ export async function rotateRefreshToken(rawToken, metadata) {
     throw new AppError('Invalid or expired session', 401);
   }
   const tokenHash = hashToken(rawToken);
-  const stored = await RefreshToken.findOne({ tokenHash }).select('+tokenHash +replacedByHash');
+  const stored = await RefreshToken.findOne({ tokenHash }).select('+tokenHash +replacedByToken');
 
   if (!stored) throw new AppError('Invalid session', 401);
   if (stored.user.toString() !== payload.sub || stored.family !== payload.family) {
@@ -56,7 +56,7 @@ export async function rotateRefreshToken(rawToken, metadata) {
   if (stored.revokedAt) {
     await RefreshToken.updateMany(
       { family: stored.family, revokedAt: null },
-      { $set: { revokedAt: new Date() } },
+      { $set: { revokedAt: new Date(), revokedByIp: metadata.ip || '' } },
     );
     throw new AppError('Session reuse detected; please sign in again', 401);
   }
@@ -64,20 +64,21 @@ export async function rotateRefreshToken(rawToken, metadata) {
   if (stored.expiresAt <= new Date()) throw new AppError('Session expired', 401);
 
   const user = await User.findById(stored.user);
-  if (!user || user.status !== 'active') throw new AppError('Invalid session', 401);
+  if (!user || user.accountStatus !== 'active') throw new AppError('Invalid session', 401);
 
   const next = await createSession(user, metadata, stored.family);
   stored.revokedAt = new Date();
-  stored.replacedByHash = hashToken(next.refreshToken);
+  stored.revokedByIp = metadata.ip;
+  stored.replacedByToken = hashToken(next.refreshToken);
   await stored.save();
   return { ...next, user };
 }
 
-export async function revokeRefreshToken(rawToken) {
+export async function revokeRefreshToken(rawToken, metadata = {}) {
   if (!rawToken) return;
   await RefreshToken.updateOne(
     { tokenHash: hashToken(rawToken), revokedAt: null },
-    { $set: { revokedAt: new Date() } },
+    { $set: { revokedAt: new Date(), revokedByIp: metadata.ip || '' } },
   );
 }
 

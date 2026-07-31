@@ -78,20 +78,20 @@ export async function refresh(req, res) {
 }
 
 export async function logout(req, res) {
-  await revokeRefreshToken(req.cookies[COOKIE_NAME]);
+  await revokeRefreshToken(req.cookies[COOKIE_NAME], metadata(req));
   clearRefreshCookie(res);
   return successResponse(res, { message: 'Logout successful' });
 }
 
 export async function forgotPassword(req, res) {
-  await requestPasswordReset(req.body.email);
+  await requestPasswordReset(req.body.email, metadata(req));
   return successResponse(res, {
     message: 'If an eligible account exists, a password reset code has been sent',
   });
 }
 
 export async function reset(req, res) {
-  await resetPassword(req.body.email, req.body.code, req.body.password);
+  await resetPassword(req.body.token, req.body.password);
   clearRefreshCookie(res);
   return successResponse(res, { message: 'Password reset successfully. Please sign in' });
 }

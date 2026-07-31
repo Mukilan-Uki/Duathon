@@ -1,4 +1,5 @@
 import 'dotenv/config';
+import bcrypt from 'bcrypt';
 import { connectDatabase, disconnectDatabase } from '../config/database.js';
 import Account from '../models/Account.js';
 import User from '../models/User.js';
@@ -22,24 +23,27 @@ const people = [
     firstName: 'Demo',
     lastName: 'Customer',
     role: 'customer',
+    phoneNumber: '+94770000001',
   },
   {
     email: 'employee.demo@duothan.local',
     firstName: 'Demo',
     lastName: 'Employee',
     role: 'employee',
+    phoneNumber: '+94770000002',
   },
   {
     email: 'admin.demo@duothan.local',
     firstName: 'Demo',
     lastName: 'Administrator',
     role: 'admin',
+    phoneNumber: '+94770000003',
   },
 ];
 
 async function seed() {
   await connectDatabase();
-  const passwordHash = await User.hashPassword(password);
+  const passwordHash = await bcrypt.hash(password, 12);
   const users = {};
 
   for (const person of people) {
@@ -48,9 +52,9 @@ async function seed() {
       {
         $set: {
           ...person,
-          passwordHash,
-          status: 'active',
-          emailVerifiedAt: new Date(),
+          password: passwordHash,
+          accountStatus: 'active',
+          isEmailVerified: true,
         },
       },
       { new: true, upsert: true, runValidators: true, setDefaultsOnInsert: true },

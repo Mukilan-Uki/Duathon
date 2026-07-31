@@ -4,6 +4,7 @@ import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { describe, expect, it, vi } from 'vitest';
 import { AuthContext } from '../context/AuthContext';
 import ProtectedRoute from './ProtectedRoute';
+import RoleProtectedRoute from './RoleProtectedRoute';
 
 function renderRoute(auth, initialEntry = '/private', roles) {
   return render(
@@ -12,8 +13,10 @@ function renderRoute(auth, initialEntry = '/private', roles) {
         <Routes>
           <Route path="/login" element={<h1>Sign in</h1>} />
           <Route path="/profile" element={<h1>Profile</h1>} />
-          <Route element={<ProtectedRoute roles={roles} />}>
-            <Route path="/private" element={<h1>Private banking</h1>} />
+          <Route element={<ProtectedRoute />}>
+            <Route element={roles ? <RoleProtectedRoute roles={roles} /> : <ProtectedRoute />}>
+              <Route path="/private" element={<h1>Private banking</h1>} />
+            </Route>
           </Route>
         </Routes>
       </MemoryRouter>

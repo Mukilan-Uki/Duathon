@@ -1,7 +1,7 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import Alert from '../../components/common/Alert';
 import AuthCard from '../../components/forms/AuthCard';
 import FormField from '../../components/forms/FormField';
@@ -11,12 +11,16 @@ import { resetSchema } from '../../validations/authSchemas';
 
 export default function ResetPasswordPage() {
   const navigate = useNavigate();
+  const [params] = useSearchParams();
   const [apiError, setApiError] = useState('');
   const {
     register,
     handleSubmit,
     formState: { errors, isSubmitting },
-  } = useForm({ resolver: zodResolver(resetSchema) });
+  } = useForm({
+    resolver: zodResolver(resetSchema),
+    defaultValues: { token: params.get('token') || '' },
+  });
   const submit = async (values) => {
     setApiError('');
     try {
@@ -40,17 +44,10 @@ export default function ResetPasswordPage() {
       <form className="space-y-5" onSubmit={handleSubmit(submit)} noValidate>
         {apiError && <Alert>{apiError}</Alert>}
         <FormField
-          label="Email address"
-          type="email"
-          {...register('email')}
-          error={errors.email?.message}
-        />
-        <FormField
-          label="Six-digit code"
-          inputMode="numeric"
-          maxLength="6"
-          {...register('code')}
-          error={errors.code?.message}
+          label="Password reset token"
+          autoComplete="off"
+          {...register('token')}
+          error={errors.token?.message}
         />
         <FormField
           label="New password"

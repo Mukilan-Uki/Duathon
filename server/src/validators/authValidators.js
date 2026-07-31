@@ -15,6 +15,10 @@ const password = z
   .regex(/\d/, 'Password must include a number')
   .regex(/[^A-Za-z0-9]/, 'Password must include a special character');
 const code = z.string().regex(/^\d{6}$/, 'Security code must contain six digits');
+const phoneNumber = z
+  .string()
+  .trim()
+  .regex(/^\+?[1-9]\d{7,14}$/, 'Enter a valid international phone number');
 
 export const registerSchema = z.object({
   body: z
@@ -22,6 +26,7 @@ export const registerSchema = z.object({
       firstName: z.string().trim().min(2).max(60),
       lastName: z.string().trim().min(2).max(60),
       email,
+      phoneNumber,
       password,
       confirmPassword: z.string(),
     })
@@ -43,7 +48,7 @@ export const verifyEmailSchema = z.object({
 
 export const resetPasswordSchema = z.object({
   body: z
-    .object({ email, code, password, confirmPassword: z.string() })
+    .object({ token: z.string().min(32).max(256), password, confirmPassword: z.string() })
     .refine((data) => data.password === data.confirmPassword, {
       message: 'Passwords do not match',
       path: ['confirmPassword'],

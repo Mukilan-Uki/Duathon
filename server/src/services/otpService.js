@@ -5,6 +5,17 @@ import { createOtpCode, hashOtp, timingSafeEqualHex } from '../utils/security.js
 import { sendOtpEmail } from './emailService.js';
 
 export async function issueOtp(user, purpose) {
+  const latest = await OTP.findOne({ user: user._id, purpose })
+    .sort({ createdAt: -1 })
+    .select('+resendCount +resendWindowStartedAt');
+  const windowMs = env.VERIFICATION_RESEND_WINDOW_MINUTES * 60 * 1000;
+  const withinWindow =
+    latest?.resendWindowStartedAt &&
+    latest.resendWindowStartedAt.getTime() > Date.now() - windowMs;
+  if (withinWindow && latest.resendCount >= env.VERIFICATION_RESEND_LIMIT) {
+    throw new AppError('Verification resend limit reached. Try again later', 429);
+  }
+
   await OTP.updateMany(
     { user: user._id, purpose, consumedAt: null },
     { $set: { consumedAt: new Date() } },
@@ -16,6 +27,8 @@ export async function issueOtp(user, purpose) {
     purpose,
     codeHash: hashOtp(code, env.JWT_ACCESS_SECRET),
     expiresAt: new Date(Date.now() + env.OTP_EXPIRES_MINUTES * 60 * 1000),
+    resendCount: withinWindow ? latest.resendCount + 1 : 1,
+    resendWindowStartedAt: withinWindow ? latest.resendWindowStartedAt : new Date(),
   });
 
   await sendOtpEmail({
