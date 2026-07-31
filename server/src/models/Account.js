@@ -10,10 +10,10 @@ const accountSchema = new mongoose.Schema(
     },
     accountNumber: {
       type: String,
-      required: true,
+      default: null,
       unique: true,
-      immutable: true,
       select: false,
+      sparse: true,
     },
     accountType: {
       type: String,
@@ -52,16 +52,21 @@ const accountSchema = new mongoose.Schema(
       default: 'pending',
       index: true,
     },
-    applicationNote: { type: String, trim: true, maxlength: 500, default: '' },
-    reviewNote: { type: String, trim: true, maxlength: 500, default: '' },
-    reviewedBy: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'User',
-      default: null,
+    branchCode: {
+      type: String,
+      required: true,
+      trim: true,
+      uppercase: true,
+      match: [/^[A-Z0-9]{3,10}$/, 'Branch code must contain 3 to 10 letters or digits'],
+      index: true,
     },
-    reviewedAt: { type: Date, default: null },
-    activatedAt: { type: Date, default: null },
+    createdBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+    approvedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User', default: null },
+    approvedAt: { type: Date, default: null },
+    suspendedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User', default: null },
+    reviewNote: { type: String, trim: true, maxlength: 500, default: '' },
     suspendedAt: { type: Date, default: null },
+    suspensionReason: { type: String, trim: true, maxlength: 500, default: '' },
     closedAt: { type: Date, default: null },
   },
   {
@@ -75,6 +80,21 @@ const accountSchema = new mongoose.Schema(
   },
 );
 
-accountSchema.index({ owner: 1, accountType: 1 }, { unique: true });
+accountSchema.index(
+  { owner: 1, accountType: 1, status: 1 },
+  { unique: true, partialFilterExpression: { status: 'pending' } },
+);
+accountSchema.index({ status: 1, createdAt: 1 });
+accountSchema.index({ branchCode: 1, status: 1 });
+
+accountSchema.virtual('user').get(function getUser() {
+  return this.owner;
+});
+accountSchema.virtual('balance').get(function getBalance() {
+  return this.ledgerBalanceMinor;
+});
+accountSchema.virtual('availableBalance').get(function getAvailableBalance() {
+  return this.availableBalanceMinor;
+});
 
 export default mongoose.model('Account', accountSchema);

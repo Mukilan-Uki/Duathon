@@ -1,6 +1,14 @@
 import { useEffect, useRef } from 'react';
 
-export default function ConfirmationModal({ open, title, children, busy, onConfirm, onCancel }) {
+export default function ConfirmationModal({
+  open,
+  title,
+  children,
+  busy,
+  confirmLabel = 'Confirm',
+  onConfirm,
+  onCancel,
+}) {
   const cancelRef = useRef(null);
   useEffect(() => {
     if (open) cancelRef.current?.focus();
@@ -38,7 +46,7 @@ export default function ConfirmationModal({ open, title, children, busy, onConfi
             onClick={onConfirm}
             type="button"
           >
-            {busy ? 'Processing…' : 'Confirm transfer'}
+            {busy ? 'Processing…' : confirmLabel}
           </button>
         </div>
       </section>

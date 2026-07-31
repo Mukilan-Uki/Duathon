@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
+import { Link } from 'react-router-dom';
 import Alert from '../../components/common/Alert';
 import StatusBadge from '../../components/common/StatusBadge';
 import { accountService } from '../../services/accountService';
@@ -17,7 +18,7 @@ export default function AccountsPage() {
     reset,
     formState: { isSubmitting },
   } = useForm({
-    defaultValues: { accountType: 'savings', applicationNote: '' },
+    defaultValues: { accountType: 'savings', branchCode: '' },
   });
 
   const load = useCallback(async () => {
@@ -74,12 +75,13 @@ export default function AccountsPage() {
             </label>
             <label className="block">
               <span className="text-sm font-medium text-slate-700">
-                Application note (optional)
+                Branch code
               </span>
-              <textarea
-                className="mt-2 min-h-24 w-full rounded-lg border border-slate-300 px-3.5 py-2.5"
-                maxLength="500"
-                {...register('applicationNote')}
+              <input
+                className="mt-2 w-full rounded-lg border border-slate-300 px-3.5 py-2.5 uppercase"
+                maxLength="10"
+                required
+                {...register('branchCode')}
               />
             </label>
             <button
@@ -112,11 +114,14 @@ export default function AccountsPage() {
                   {accounts.map((account) => (
                     <tr className="border-t border-slate-100" key={account._id}>
                       <td className="whitespace-nowrap px-6 py-4 font-mono">
-                        {account.accountNumber}
+                        <Link className="text-bank-700 underline" to={`/accounts/${account._id}`}>
+                          {account.maskedAccountNumber}
+                        </Link>
                       </td>
                       <td className="px-6 py-4 capitalize">{account.accountType}</td>
                       <td className="whitespace-nowrap px-6 py-4 font-semibold">
-                        {formatMinorUnits(account.availableBalanceMinor, account.currency)}
+                        {account.availableBalanceDisplay ||
+                          formatMinorUnits(account.availableBalanceMinor, account.currency)}
                       </td>
                       <td className="px-6 py-4">
                         <StatusBadge status={account.status} />

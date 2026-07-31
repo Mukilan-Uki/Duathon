@@ -70,6 +70,10 @@ async function seed() {
     {
       $setOnInsert: {
         accountNumber: '699900000001',
+        branchCode: 'CMB01',
+        createdBy: users.admin._id,
+        approvedBy: users.admin._id,
+        approvedAt: new Date(),
         currency: 'LKR',
         ledgerBalanceMinor: 2500000,
         availableBalanceMinor: 2500000,

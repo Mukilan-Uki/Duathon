@@ -1,10 +1,13 @@
 import {
   applyForAccount,
+  approveAccount,
   changeAccountStatus,
   getAuthorizedAccount,
   listCustomerAccounts,
   listPendingAccounts,
+  rejectAccount,
   reviewAccount,
+  searchAccounts,
 } from '../services/accountService.js';
 import { successResponse } from '../utils/apiResponse.js';
 
@@ -13,7 +16,7 @@ function metadata(req) {
 }
 
 export async function createAccountApplication(req, res) {
-  const account = await applyForAccount(req.user._id, req.body);
+  const account = await applyForAccount(req.user._id, req.body, metadata(req));
   return successResponse(res, {
     statusCode: 201,
     message: 'Account application submitted for review',
@@ -50,6 +53,26 @@ export async function review(req, res) {
   });
 }
 
+export async function approve(req, res) {
+  const account = await approveAccount(req.params.accountId, req.user, metadata(req));
+  return successResponse(res, { message: 'Account approved successfully', data: { account } });
+}
+
+export async function reject(req, res) {
+  const account = await rejectAccount(
+    req.params.accountId,
+    req.user,
+    req.body.reason,
+    metadata(req),
+  );
+  return successResponse(res, { message: 'Account application rejected', data: { account } });
+}
+
+export async function search(req, res) {
+  const accounts = await searchAccounts(req.query);
+  return successResponse(res, { data: { accounts } });
+}
+
 export async function updateStatus(req, res) {
   const account = await changeAccountStatus(
     req.params.accountId,
@@ -60,6 +83,32 @@ export async function updateStatus(req, res) {
   );
   return successResponse(res, {
     message: `Account status changed to ${req.body.status}`,
+    data: { account },
+  });
+}
+
+export function suspend(req, res) {
+  return handleStatus(req, res, 'suspended');
+}
+
+export function reactivate(req, res) {
+  return handleStatus(req, res, 'active');
+}
+
+export function close(req, res) {
+  return handleStatus(req, res, 'closed');
+}
+
+async function handleStatus(req, res, status) {
+  const account = await changeAccountStatus(
+    req.params.accountId,
+    req.user,
+    status,
+    req.body.reason,
+    metadata(req),
+  );
+  return successResponse(res, {
+    message: `Account status changed to ${status}`,
     data: { account },
   });
 }

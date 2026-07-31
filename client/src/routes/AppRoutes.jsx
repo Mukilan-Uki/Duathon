@@ -16,6 +16,7 @@ const ProfilePage = load(() => import('../pages/customer/ProfilePage'));
 const CustomerDashboardPage = load(() => import('../pages/customer/CustomerDashboardPage'));
 const NotificationsPage = load(() => import('../pages/customer/NotificationsPage'));
 const AccountsPage = load(() => import('../pages/customer/AccountsPage'));
+const AccountDetailsPage = load(() => import('../pages/customer/AccountDetailsPage'));
 const BeneficiariesPage = load(() => import('../pages/customer/BeneficiariesPage'));
 const LoansPage = load(() => import('../pages/customer/LoansPage'));
 const TransferPage = load(() => import('../pages/customer/TransferPage'));
@@ -57,6 +58,7 @@ export default function AppRoutes() {
             <Route path="dashboard" element={<CustomerDashboardPage />} />
             <Route path="notifications" element={<NotificationsPage />} />
             <Route path="accounts" element={<AccountsPage />} />
+            <Route path="accounts/:accountId" element={<AccountDetailsPage />} />
             <Route path="beneficiaries" element={<BeneficiariesPage />} />
             <Route path="loans" element={<LoansPage />} />
             <Route path="transfer" element={<TransferPage />} />

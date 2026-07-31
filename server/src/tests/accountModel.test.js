@@ -6,6 +6,8 @@ describe('Account financial invariants', () => {
     owner: '507f1f77bcf86cd799439011',
     accountNumber: '601234567890',
     accountType: 'savings',
+    branchCode: 'CMB01',
+    createdBy: '507f1f77bcf86cd799439011',
   };
 
   it('accepts integer minor-unit balances', () => {
