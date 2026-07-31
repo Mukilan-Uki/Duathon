@@ -164,6 +164,16 @@ describe('authentication API', () => {
     expect(response.headers['set-cookie'][0]).toContain('rotated-refresh');
   });
 
+  it('clears a stale refresh cookie when rotation fails', async () => {
+    rotateRefreshToken.mockRejectedValue(new AppError('Invalid session', 401));
+    const response = await request(app)
+      .post('/api/auth/refresh')
+      .set('Origin', 'http://localhost:5173')
+      .set('Cookie', 'duothan_refresh=stale-refresh')
+      .expect(401);
+    expect(response.headers['set-cookie'][0]).toContain('duothan_refresh=;');
+  });
+
   it('revokes the refresh token during logout', async () => {
     await request(app)
       .post('/api/auth/logout')

@@ -69,12 +69,17 @@ export async function login(req, res) {
 }
 
 export async function refresh(req, res) {
-  const result = await rotateRefreshToken(req.cookies[COOKIE_NAME], metadata(req));
-  setRefreshCookie(res, result.refreshToken);
-  return successResponse(res, {
-    message: 'Session refreshed',
-    data: { accessToken: result.accessToken, user: result.user },
-  });
+  try {
+    const result = await rotateRefreshToken(req.cookies[COOKIE_NAME], metadata(req));
+    setRefreshCookie(res, result.refreshToken);
+    return successResponse(res, {
+      message: 'Session refreshed',
+      data: { accessToken: result.accessToken, user: result.user },
+    });
+  } catch (error) {
+    clearRefreshCookie(res);
+    throw error;
+  }
 }
 
 export async function logout(req, res) {

@@ -66,7 +66,7 @@ export async function loginUser(emailInput, password, metadata) {
   const maxLoginAttempts = await getNumericSetting('login_max_attempts', 5);
   const email = emailInput.toLowerCase();
   const user = await User.findOne({ email }).select(
-    '+password +failedLoginAttempts +lockUntil',
+    '+password +passwordHash +failedLoginAttempts +lockUntil',
   );
 
   if (!user) {
@@ -81,6 +81,37 @@ export async function loginUser(emailInput, password, metadata) {
   if (user.lockUntil) {
     user.failedLoginAttempts = 0;
     user.lockUntil = null;
+  }
+
+  const legacyUpdates = {};
+  const legacyUnsets = {};
+  if (!user.password && user.passwordHash) {
+    legacyUpdates.password = user.passwordHash;
+    legacyUnsets.passwordHash = 1;
+  }
+  if (user.status) {
+    legacyUpdates.accountStatus = user.status;
+    legacyUnsets.status = 1;
+  }
+  if (user.emailVerifiedAt) {
+    legacyUpdates.isEmailVerified = true;
+    legacyUnsets.emailVerifiedAt = 1;
+  }
+  if (Object.keys(legacyUpdates).length) {
+    await User.updateOne(
+      { _id: user._id },
+      { $set: legacyUpdates, $unset: legacyUnsets },
+    );
+    Object.assign(user, legacyUpdates);
+    user.passwordHash = undefined;
+    user.status = undefined;
+    user.emailVerifiedAt = undefined;
+    user.unmarkModified('password');
+    user.unmarkModified('passwordHash');
+    user.unmarkModified('accountStatus');
+    user.unmarkModified('status');
+    user.unmarkModified('isEmailVerified');
+    user.unmarkModified('emailVerifiedAt');
   }
 
   if (!(await user.verifyPassword(password))) {
@@ -175,11 +206,12 @@ export async function resetPassword(token, password) {
 }
 
 export async function changePassword(userId, currentPassword, newPassword) {
-  const user = await User.findById(userId).select('+password');
+  const user = await User.findById(userId).select('+password +passwordHash');
   if (!user || !(await user.verifyPassword(currentPassword))) {
     throw new AppError('Current password is incorrect', 400);
   }
   user.password = newPassword;
+  user.passwordHash = undefined;
   user.passwordChangedAt = new Date();
   await user.save();
   await RefreshToken.updateMany(

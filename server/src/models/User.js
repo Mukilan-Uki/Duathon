@@ -15,10 +15,22 @@ const userSchema = new mongoose.Schema(
       match: [/^[^\s@]+@[^\s@]+\.[^\s@]+$/, 'Please provide a valid email address'],
       index: true,
     },
-    password: { type: String, required: true, minlength: 12, select: false },
+    password: {
+      type: String,
+      required() {
+        return !this.passwordHash;
+      },
+      minlength: 12,
+      select: false,
+    },
+    // Temporary read-only compatibility path for records created before Phase 2.
+    passwordHash: { type: String, select: false },
     phoneNumber: {
       type: String,
-      required: true,
+      required() {
+        // Legacy users predate phone capture; all newly created users must provide it.
+        return this.isNew;
+      },
       trim: true,
       match: [/^\+?[1-9]\d{7,14}$/, 'Please provide a valid phone number'],
     },
@@ -35,6 +47,9 @@ const userSchema = new mongoose.Schema(
       index: true,
     },
     isEmailVerified: { type: Boolean, default: false },
+    // Temporary compatibility paths for pre-Phase-2 records.
+    status: { type: String, enum: ['pending', 'active', 'suspended'] },
+    emailVerifiedAt: { type: Date, default: null },
     failedLoginAttempts: { type: Number, default: 0, select: false },
     lockUntil: { type: Date, default: null, select: false },
     passwordChangedAt: { type: Date, default: null, select: false },
@@ -58,6 +73,9 @@ const userSchema = new mongoose.Schema(
       virtuals: true,
       transform(_document, result) {
         delete result.password;
+        delete result.passwordHash;
+        delete result.status;
+        delete result.emailVerifiedAt;
         delete result.failedLoginAttempts;
         delete result.lockUntil;
         delete result.passwordChangedAt;
@@ -72,25 +90,15 @@ userSchema.virtual('fullName').get(function fullName() {
   return `${this.firstName} ${this.lastName}`;
 });
 
-userSchema.virtual('status')
-  .get(function getStatus() {
-    return this.accountStatus;
-  })
-  .set(function setStatus(value) {
-    this.accountStatus = value;
-  });
-
-userSchema.virtual('emailVerifiedAt').get(function getEmailVerifiedAt() {
-  return this.isEmailVerified ? this.updatedAt : null;
-});
-
 userSchema.pre('save', async function hashPassword() {
   if (!this.isModified('password')) return;
   this.password = await bcrypt.hash(this.password, 12);
 });
 
 userSchema.methods.comparePassword = function comparePassword(candidatePassword) {
-  return bcrypt.compare(candidatePassword, this.password);
+  const storedHash = this.password || this.passwordHash;
+  if (!storedHash) return Promise.resolve(false);
+  return bcrypt.compare(candidatePassword, storedHash);
 };
 
 userSchema.methods.verifyPassword = userSchema.methods.comparePassword;
