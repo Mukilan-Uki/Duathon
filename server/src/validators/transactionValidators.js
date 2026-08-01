@@ -14,7 +14,10 @@ export const transferSchema = z.object({
       amount: z.number().int().safe().positive().optional(),
       amountMinor: z.number().int().safe().positive().optional(),
       description: z.string().trim().max(200).optional().default(''),
-      idempotencyKey: z.string().regex(/^[A-Za-z0-9_-]{8,128}$/).optional(),
+      idempotencyKey: z
+        .string()
+        .regex(/^[A-Za-z0-9_-]{8,128}$/)
+        .optional(),
     })
     .refine((value) => value.amount != null || value.amountMinor != null, {
       message: 'An integer minor-unit amount is required',

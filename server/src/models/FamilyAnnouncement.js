@@ -2,7 +2,12 @@ import mongoose from 'mongoose';
 
 const familyAnnouncementSchema = new mongoose.Schema(
   {
-    family: { type: mongoose.Schema.Types.ObjectId, ref: 'FamilyGroup', required: true, index: true },
+    family: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'FamilyGroup',
+      required: true,
+      index: true,
+    },
     author: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
     title: { type: String, required: true, trim: true, minlength: 3, maxlength: 100 },
     message: { type: String, required: true, trim: true, minlength: 5, maxlength: 500 },

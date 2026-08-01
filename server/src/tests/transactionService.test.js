@@ -49,9 +49,8 @@ vi.mock('../services/settingService.js', () => ({
   getNumericSetting: vi.fn((_key, fallback) => fallback),
 }));
 
-const { createReversalFoundation, transferMoney } = await import(
-  '../services/transactionService.js'
-);
+const { createReversalFoundation, transferMoney } =
+  await import('../services/transactionService.js');
 
 function queryResult(value) {
   return {
@@ -212,9 +211,7 @@ describe('transaction service', () => {
       availableBalanceMinor: 0,
       ledgerBalanceMinor: 0,
     };
-    mocks.accountFindOne.mockImplementation((query) =>
-      queryResult(query._id ? sender : receiver),
-    );
+    mocks.accountFindOne.mockImplementation((query) => queryResult(query._id ? sender : receiver));
     let debitAttempts = 0;
     mocks.accountFindOneAndUpdate.mockImplementation((query) => {
       if (query.owner) {
@@ -258,12 +255,7 @@ describe('transaction service', () => {
       createReversalFoundation('transaction-1', { role: 'employee' }, 'Bank correction', metadata),
     ).rejects.toMatchObject({ statusCode: 403 });
     await expect(
-      createReversalFoundation(
-        'transaction-1',
-        { role: 'admin', _id: 'admin-id' },
-        '',
-        metadata,
-      ),
+      createReversalFoundation('transaction-1', { role: 'admin', _id: 'admin-id' }, '', metadata),
     ).rejects.toMatchObject({ statusCode: 422 });
     expect(mocks.connectionTransaction).not.toHaveBeenCalled();
   });

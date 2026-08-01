@@ -211,9 +211,7 @@ export default function TransferPage() {
               <dt>Amount</dt>
               <dd className="font-semibold">{formatMinorUnits(pending.payload.amount)}</dd>
             </div>
-            <p className="pt-3 text-amber-700">
-              Completed transfers cannot normally be cancelled.
-            </p>
+            <p className="pt-3 text-amber-700">Completed transfers cannot normally be cancelled.</p>
           </dl>
         )}
       </ConfirmationModal>

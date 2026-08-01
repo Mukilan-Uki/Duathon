@@ -17,14 +17,22 @@ export default function AccountDetailsPage() {
       .catch((requestError) => setError(getApiError(requestError, 'Unable to load account')));
   }, [accountId]);
 
-  if (error) return <div className="mx-auto max-w-3xl px-5 py-10"><Alert>{error}</Alert></div>;
-  if (!account) return <p className="mx-auto max-w-3xl px-5 py-10 text-slate-500">Loading account…</p>;
+  if (error)
+    return (
+      <div className="mx-auto max-w-3xl px-5 py-10">
+        <Alert>{error}</Alert>
+      </div>
+    );
+  if (!account)
+    return <p className="mx-auto max-w-3xl px-5 py-10 text-slate-500">Loading account…</p>;
 
   const copyNumber = () =>
     account.accountNumber && navigator.clipboard.writeText(account.accountNumber);
   return (
     <div className="mx-auto max-w-3xl px-5 py-10">
-      <Link className="text-sm font-semibold text-bank-700" to="/accounts">← My accounts</Link>
+      <Link className="text-sm font-semibold text-bank-700" to="/accounts">
+        ← My accounts
+      </Link>
       <div className="mt-5 rounded-2xl border border-slate-200 bg-white p-6 shadow-card sm:p-8">
         <div className="flex items-center justify-between gap-4">
           <h1 className="text-3xl font-bold capitalize">{account.accountType} account</h1>
@@ -38,7 +46,10 @@ export default function AccountDetailsPage() {
             ['Available balance', account.availableBalanceDisplay],
             ['Currency', account.currency],
             ['Created', new Date(account.createdAt).toLocaleDateString()],
-            ['Approval', account.approvedAt ? new Date(account.approvedAt).toLocaleDateString() : 'Pending'],
+            [
+              'Approval',
+              account.approvedAt ? new Date(account.approvedAt).toLocaleDateString() : 'Pending',
+            ],
           ].map(([label, value]) => (
             <div key={label}>
               <dt className="text-sm text-slate-500">{label}</dt>

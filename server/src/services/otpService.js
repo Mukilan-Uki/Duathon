@@ -10,8 +10,7 @@ export async function issueOtp(user, purpose) {
     .select('+resendCount +resendWindowStartedAt');
   const windowMs = env.VERIFICATION_RESEND_WINDOW_MINUTES * 60 * 1000;
   const withinWindow =
-    latest?.resendWindowStartedAt &&
-    latest.resendWindowStartedAt.getTime() > Date.now() - windowMs;
+    latest?.resendWindowStartedAt && latest.resendWindowStartedAt.getTime() > Date.now() - windowMs;
   if (withinWindow && latest.resendCount >= env.VERIFICATION_RESEND_LIMIT) {
     throw new AppError('Verification resend limit reached. Try again later', 429);
   }

@@ -45,7 +45,8 @@ export async function applyForAccount(userId, input, metadata = {}) {
     accountType: input.accountType,
     status: 'pending',
   });
-  if (existing) throw new AppError('A pending application already exists for this account type', 409);
+  if (existing)
+    throw new AppError('A pending application already exists for this account type', 409);
   const account = await Account.create({
     owner: userId,
     createdBy: userId,
@@ -68,12 +69,16 @@ export async function applyForAccount(userId, input, metadata = {}) {
 }
 
 export async function listCustomerAccounts(userId) {
-  const accounts = await Account.find({ owner: userId }).select('+accountNumber').sort({ createdAt: -1 });
+  const accounts = await Account.find({ owner: userId })
+    .select('+accountNumber')
+    .sort({ createdAt: -1 });
   return accounts.map((account) => presentAccount(account));
 }
 
 export async function getAuthorizedAccount(accountId, user) {
-  const account = await Account.findById(accountId).select('+accountNumber').populate('owner', 'firstName lastName email phoneNumber');
+  const account = await Account.findById(accountId)
+    .select('+accountNumber')
+    .populate('owner', 'firstName lastName email phoneNumber');
   if (!account) throw new AppError('Account not found', 404);
   const ownerId = account.owner?._id || account.owner;
   if (user.role === 'customer' && ownerId.toString() !== user._id.toString()) {
@@ -129,7 +134,8 @@ async function notifyAndAudit(account, actor, action, before, metadata, title, m
 export async function approveAccount(accountId, reviewer, metadata) {
   const account = await Account.findById(accountId).select('+accountNumber');
   if (!account) throw new AppError('Account not found', 404);
-  if (account.status !== 'pending') throw new AppError('Only pending accounts can be approved', 409);
+  if (account.status !== 'pending')
+    throw new AppError('Only pending accounts can be approved', 409);
   const before = { status: account.status };
   account.status = 'active';
   account.approvedBy = reviewer._id;
@@ -144,20 +150,37 @@ export async function approveAccount(accountId, reviewer, metadata) {
       account.accountNumber = null;
     }
   }
-  await notifyAndAudit(account, reviewer, 'ACCOUNT_APPROVED', before, metadata, 'Account approved', `Your ${account.accountType} account is now active.`);
+  await notifyAndAudit(
+    account,
+    reviewer,
+    'ACCOUNT_APPROVED',
+    before,
+    metadata,
+    'Account approved',
+    `Your ${account.accountType} account is now active.`,
+  );
   return presentAccount(account, reviewer.role, true);
 }
 
 export async function rejectAccount(accountId, reviewer, reason, metadata) {
   const account = await Account.findById(accountId);
   if (!account) throw new AppError('Account not found', 404);
-  if (account.status !== 'pending') throw new AppError('Only pending accounts can be rejected', 409);
+  if (account.status !== 'pending')
+    throw new AppError('Only pending accounts can be rejected', 409);
   const before = { status: account.status };
   account.status = 'closed';
   account.reviewNote = reason;
   account.closedAt = new Date();
   await account.save();
-  await notifyAndAudit(account, reviewer, 'ACCOUNT_REJECTED', before, metadata, 'Account application declined', `Your ${account.accountType} application was declined.`);
+  await notifyAndAudit(
+    account,
+    reviewer,
+    'ACCOUNT_REJECTED',
+    before,
+    metadata,
+    'Account application declined',
+    `Your ${account.accountType} application was declined.`,
+  );
   return presentAccount(account, reviewer.role);
 }
 
@@ -176,9 +199,11 @@ export async function validateAccountClosure(account) {
 export async function changeAccountStatus(accountId, actor, status, reason, metadata) {
   const account = await Account.findById(accountId).select('+accountNumber');
   if (!account) throw new AppError('Account not found', 404);
-  if (account.status === 'pending') throw new AppError('Pending accounts must be reviewed first', 409);
+  if (account.status === 'pending')
+    throw new AppError('Pending accounts must be reviewed first', 409);
   if (account.status === 'closed') throw new AppError('Closed accounts cannot be reactivated', 409);
-  if (status === 'closed' && actor.role !== 'admin') throw new AppError('Only administrators can close accounts', 403);
+  if (status === 'closed' && actor.role !== 'admin')
+    throw new AppError('Only administrators can close accounts', 403);
   if (status === account.status) throw new AppError(`Account is already ${status}`, 409);
   if (status === 'suspended' && !reason) throw new AppError('A suspension reason is required', 422);
   if (status === 'closed') await validateAccountClosure(account);
@@ -197,7 +222,15 @@ export async function changeAccountStatus(accountId, actor, status, reason, meta
     account.closedAt = new Date();
   }
   await account.save();
-  await notifyAndAudit(account, actor, `ACCOUNT_${status.toUpperCase()}`, before, metadata, `Account ${status}`, `Your ${account.accountType} account is now ${status}.`);
+  await notifyAndAudit(
+    account,
+    actor,
+    `ACCOUNT_${status.toUpperCase()}`,
+    before,
+    metadata,
+    `Account ${status}`,
+    `Your ${account.accountType} account is now ${status}.`,
+  );
   return presentAccount(account, actor.role, true);
 }
 

@@ -6,10 +6,7 @@ import { authenticate } from '../middleware/authenticate.js';
 import { authorize } from '../middleware/authorize.js';
 import { requireIdempotencyKey } from '../middleware/requireIdempotencyKey.js';
 import { validate } from '../middleware/validate.js';
-import {
-  recipientValidationSchema,
-  transferSchema,
-} from '../validators/transactionValidators.js';
+import { recipientValidationSchema, transferSchema } from '../validators/transactionValidators.js';
 
 const router = Router();
 const transferLimiter = rateLimit({

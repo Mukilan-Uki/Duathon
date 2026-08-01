@@ -74,9 +74,7 @@ export default function AccountsPage() {
               </select>
             </label>
             <label className="block">
-              <span className="text-sm font-medium text-slate-700">
-                Branch code
-              </span>
+              <span className="text-sm font-medium text-slate-700">Branch code</span>
               <input
                 className="mt-2 w-full rounded-lg border border-slate-300 px-3.5 py-2.5 uppercase"
                 maxLength="10"

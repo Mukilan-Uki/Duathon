@@ -91,18 +91,14 @@ describe('transaction API safeguards', () => {
       status: 'completed',
       initiatedAt: new Date(),
     });
-    await request(app)
-      .get('/api/transactions/507f1f77bcf86cd799439019/receipt')
-      .expect(200);
+    await request(app).get('/api/transactions/507f1f77bcf86cd799439019/receipt').expect(200);
   });
 
   it('returns forbidden when an unrelated customer requests a receipt', async () => {
     getTransactionForUser.mockRejectedValue(
       new AppError('You do not have permission to view this transaction', 403),
     );
-    await request(app)
-      .get('/api/transactions/507f1f77bcf86cd799439019/receipt')
-      .expect(403);
+    await request(app).get('/api/transactions/507f1f77bcf86cd799439019/receipt').expect(403);
   });
 
   it('rejects zero and negative transfer values', async () => {

@@ -84,9 +84,7 @@ describe('account API', () => {
       _id: '507f1f77bcf86cd799439012',
       maskedAccountNumber: '•••• •••• 7890',
     });
-    const response = await request(app)
-      .get('/api/accounts/507f1f77bcf86cd799439012')
-      .expect(200);
+    const response = await request(app).get('/api/accounts/507f1f77bcf86cd799439012').expect(200);
     expect(response.body.data.account.maskedAccountNumber).toContain('7890');
   });
 
