@@ -29,6 +29,7 @@ const result = z
     TRANSFER_MAX_MINOR: z.coerce.number().int().positive().default(100000000),
     TRANSFER_DAILY_LIMIT_MINOR: z.coerce.number().int().positive().default(250000000),
     TRANSFER_MAX_PER_DAY: z.coerce.number().int().positive().default(25),
+    SUSPICIOUS_TRANSFER_MINOR: z.coerce.number().int().positive().default(50000000),
     LOAN_MIN_MINOR: z.coerce.number().int().positive().default(100000),
     LOAN_MAX_MINOR: z.coerce.number().int().positive().default(500000000),
     LOAN_PERSONAL_RATE_BPS: z.coerce.number().int().min(0).max(10000).default(1200),

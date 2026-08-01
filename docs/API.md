@@ -99,6 +99,19 @@ Dashboard endpoints are read-only and return server-calculated summaries, recent
 
 ## Operations, notifications, and governance
 
+Canonical notification endpoints are available directly under `/notifications`; the older
+`/operations/notifications` list/read aliases remain compatible.
+
+| Method | Endpoint                         | Role          | Purpose                           |
+| ------ | -------------------------------- | ------------- | --------------------------------- |
+| GET    | `/notifications`                 | Authenticated | Paginated owned notification feed |
+| GET    | `/notifications/unread`          | Authenticated | Unread feed and count             |
+| PATCH  | `/notifications/:id/read`        | Authenticated | Mark an owned notification read   |
+| PATCH  | `/notifications/read-all`        | Authenticated | Mark all owned notifications read |
+| PATCH  | `/notifications/preferences`     | Authenticated | Update notification preferences   |
+| DELETE | `/notifications/:id`             | Authenticated | Soft-delete an owned notification |
+| POST   | `/admin/notifications/broadcast` | Admin         | Broadcast by role or to all users |
+
 | Method | Endpoint                                         | Role            | Purpose                         |
 | ------ | ------------------------------------------------ | --------------- | ------------------------------- |
 | GET    | `/operations/notifications`                      | Authenticated   | List personal notifications     |

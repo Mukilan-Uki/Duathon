@@ -104,6 +104,7 @@ docs/                   API, architecture, security, quality, and user guides
 - [Quality assurance](docs/QUALITY.md)
 - [User guide](docs/USER_GUIDE.md)
 - [Deployment guide](docs/DEPLOYMENT.md)
+- [Enterprise operations](docs/ENTERPRISE.md)
 - [Final submission checklist](docs/SUBMISSION_CHECKLIST.md)
 
 ## Screenshots

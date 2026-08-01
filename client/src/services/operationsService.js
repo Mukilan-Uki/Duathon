@@ -3,12 +3,15 @@ import httpClient from '../api/httpClient';
 const data = (response) => response.data;
 
 export const operationsService = {
-  notifications: (params) => httpClient.get('/operations/notifications', { params }).then(data),
+  notifications: (params) => httpClient.get('/notifications', { params }).then(data),
+  unreadNotifications: (params) => httpClient.get('/notifications/unread', { params }).then(data),
   readNotification: (notificationId) =>
-    httpClient.patch(`/operations/notifications/${notificationId}/read`).then(data),
-  readAllNotifications: () => httpClient.patch('/operations/notifications/read-all').then(data),
-  preferences: (payload) =>
-    httpClient.patch('/operations/notification-preferences', payload).then(data),
+    httpClient.patch(`/notifications/${notificationId}/read`).then(data),
+  readAllNotifications: () => httpClient.patch('/notifications/read-all').then(data),
+  deleteNotification: (notificationId) =>
+    httpClient.delete(`/notifications/${notificationId}`).then(data),
+  preferences: (payload) => httpClient.patch('/notifications/preferences', payload).then(data),
+  broadcast: (payload) => httpClient.post('/admin/notifications/broadcast', payload).then(data),
   suspicious: (params) =>
     httpClient.get('/operations/suspicious-activities', { params }).then(data),
   flag: (transactionId, reason) =>

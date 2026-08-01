@@ -1,12 +1,14 @@
 import { Router } from 'express';
 import {
   audits,
+  broadcast,
   flag,
   investigate,
   notifications,
   preferences,
   readAllNotifications,
   readNotification,
+  removeNotification,
   saveSetting,
   settings,
   suspicious,
@@ -17,6 +19,7 @@ import { authorize } from '../middleware/authorize.js';
 import { validate } from '../middleware/validate.js';
 import {
   auditListSchema,
+  broadcastNotificationSchema,
   flagTransactionSchema,
   investigationSchema,
   notificationIdSchema,
@@ -30,19 +33,18 @@ const router = Router();
 router.use(authenticate);
 
 router.get('/notifications', validate(notificationListSchema), asyncHandler(notifications));
-router.patch('/notifications/read-all', authorize('customer'), asyncHandler(readAllNotifications));
+router.patch('/notifications/read-all', asyncHandler(readAllNotifications));
+router.delete(
+  '/notifications/:notificationId',
+  validate(notificationIdSchema),
+  asyncHandler(removeNotification),
+);
 router.patch(
   '/notifications/:notificationId/read',
-  authorize('customer'),
   validate(notificationIdSchema),
   asyncHandler(readNotification),
 );
-router.patch(
-  '/notification-preferences',
-  authorize('customer'),
-  validate(preferencesSchema),
-  asyncHandler(preferences),
-);
+router.patch('/notification-preferences', validate(preferencesSchema), asyncHandler(preferences));
 
 router.get(
   '/suspicious-activities',
@@ -69,6 +71,12 @@ router.put(
   authorize('admin'),
   validate(settingSchema),
   asyncHandler(saveSetting),
+);
+router.post(
+  '/admin/notifications/broadcast',
+  authorize('admin'),
+  validate(broadcastNotificationSchema),
+  asyncHandler(broadcast),
 );
 
 export default router;

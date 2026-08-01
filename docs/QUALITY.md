@@ -12,7 +12,7 @@ npm run build
 npm audit --omit=dev
 ```
 
-The test suite covers authentication, role authorization, validation, centralized errors, accounts, beneficiaries, transfers, idempotency, insufficient funds, loans, dashboards, notifications, investigations, and system administration APIs. Client tests cover the public application foundation and protected-route behavior for unauthenticated, authorized, and unauthorized users.
+The test suite covers authentication, role authorization, validation, centralized errors, accounts, beneficiaries, transfers, idempotency, insufficient funds, loans, dashboards, notifications, investigations, and system administration APIs. Client tests cover the public application foundation, protected-route behavior, and staff notification read/delete interactions.
 
 ## Phase 9 review
 
@@ -28,4 +28,4 @@ Before deployment, test each role at mobile, tablet, and desktop widths. Complet
 
 ## Dependency advisory note
 
-The July 2026 React Router advisory `GHSA-qwww-vcr4-c8h2` applies only to unstable React Server Component APIs. Duothan uses React Router declarative mode through `BrowserRouter` in a client-only Vite SPA and does not use the affected RSC APIs. React Router 8.3.0 contains the upstream patch but is a major-version migration. The project retains the current version until that migration is tested; teams should track the advisory and re-run the audit before release.
+The August 2026 React Router advisory `GHSA-qwww-vcr4-c8h2` applies only to React Server Component server actions. Duothan uses React Router declarative mode through `BrowserRouter` in a client-only Vite SPA and does not use the affected RSC APIs. React Router 8.3.0 contains the upstream patch but is a major-version migration. The project retains the current version until that migration is tested; teams should track the advisory and re-run the audit before release. The transitive `brace-expansion` denial-of-service advisory was resolved by updating the lockfile.

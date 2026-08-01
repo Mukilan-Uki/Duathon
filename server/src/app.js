@@ -26,7 +26,9 @@ app.use(
   '/api',
   rateLimit({
     windowMs: 15 * 60 * 1000,
-    limit: 200,
+    // Authentication and other sensitive routes have dedicated lower limits.
+    // This general ceiling also covers dashboard and notification polling.
+    limit: 1000,
     standardHeaders: 'draft-7',
     legacyHeaders: false,
   }),

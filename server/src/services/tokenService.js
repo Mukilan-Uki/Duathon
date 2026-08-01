@@ -78,10 +78,12 @@ export async function rotateRefreshToken(rawToken, metadata) {
 
 export async function revokeRefreshToken(rawToken, metadata = {}) {
   if (!rawToken) return;
-  await RefreshToken.updateOne(
+  const stored = await RefreshToken.findOneAndUpdate(
     { tokenHash: hashToken(rawToken), revokedAt: null },
     { $set: { revokedAt: new Date(), revokedByIp: metadata.ip || '' } },
-  );
+    { new: true },
+  ).select('user');
+  return stored?.user || null;
 }
 
 export function verifyAccessToken(token) {

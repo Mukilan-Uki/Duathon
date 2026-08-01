@@ -5,7 +5,7 @@ const systemSettingSchema = new mongoose.Schema(
     key: { type: String, required: true, unique: true, trim: true, index: true },
     category: {
       type: String,
-      enum: ['transactions', 'accounts', 'loans', 'security'],
+      enum: ['transactions', 'accounts', 'loans', 'security', 'notifications', 'application'],
       required: true,
       index: true,
     },

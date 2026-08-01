@@ -22,6 +22,12 @@ Notification ownership is enforced on every read update. Investigation access re
 
 The centralized error handler classifies malformed JSON, Mongoose cast and validation errors, duplicate keys, and operational errors without exposing unexpected exception details. Stack traces are restricted to development. The Phase 9 dependency review found `GHSA-qwww-vcr4-c8h2`; its affected unstable React Server Component path is not used by this declarative-mode Vite SPA. The assessment and upgrade guidance are recorded in `QUALITY.md`.
 
+Audit snapshots are recursively redacted for password, token, OTP, secret, cookie, and authorization
+keys. Notification reads, updates, and soft deletion are scoped to the authenticated recipient.
+Administrative broadcasts and governance APIs require the administrator role. Automated risk
+signals cover authentication abuse, OTP abuse, password-reset bursts, large transfers, and repeated
+transfer failures without storing credentials or security codes.
+
 In local development without SMTP, security codes are written to the server console so the flow can be tested. Production never logs codes and must configure SMTP.
 
 ## Dependency audit note

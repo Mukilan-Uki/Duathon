@@ -54,11 +54,11 @@ export default function AppRoutes() {
           <Route path="reset-password" element={<ResetPasswordPage />} />
           <Route element={<ProtectedRoute />}>
             <Route path="profile" element={<ProfilePage />} />
+            <Route path="notifications" element={<NotificationsPage />} />
           </Route>
           <Route element={<ProtectedRoute />}>
             <Route element={<RoleProtectedRoute roles={['customer']} />}>
               <Route path="dashboard" element={<CustomerDashboardPage />} />
-              <Route path="notifications" element={<NotificationsPage />} />
               <Route path="accounts" element={<AccountsPage />} />
               <Route path="accounts/:accountId" element={<AccountDetailsPage />} />
               <Route path="beneficiaries" element={<BeneficiariesPage />} />

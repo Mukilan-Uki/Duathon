@@ -1,6 +1,7 @@
 import { Landmark, LockKeyhole } from 'lucide-react';
 import { Link, Outlet } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
+import NotificationBell from '../components/notifications/NotificationBell';
 
 export default function AppLayout() {
   const { authenticated, user, logout } = useAuth();
@@ -68,6 +69,7 @@ export default function AppLayout() {
                     </Link>
                   </>
                 )}
+                <NotificationBell />
                 <Link className="font-medium text-slate-700" to="/profile">
                   {user.firstName}
                 </Link>

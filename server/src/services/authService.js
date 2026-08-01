@@ -10,10 +10,13 @@ import { createSession } from './tokenService.js';
 import { createRandomToken, hashToken, timingSafeEqualHex } from '../utils/security.js';
 import { sendPasswordResetEmail } from './emailService.js';
 import { env } from '../config/env.js';
+import { recordSecuritySignal } from './securityMonitoringService.js';
+import { parseUserAgent } from '../utils/userAgent.js';
 
 const LOCK_MINUTES = 15;
 
 async function recordLogin(user, email, successful, reason, metadata) {
+  const client = parseUserAgent(metadata.userAgent);
   await LoginHistory.create({
     user: user?._id || null,
     email,
@@ -21,6 +24,7 @@ async function recordLogin(user, email, successful, reason, metadata) {
     reason,
     ipAddress: metadata.ip,
     userAgent: metadata.userAgent,
+    ...client,
   });
 }
 
@@ -98,10 +102,7 @@ export async function loginUser(emailInput, password, metadata) {
     legacyUnsets.emailVerifiedAt = 1;
   }
   if (Object.keys(legacyUpdates).length) {
-    await User.updateOne(
-      { _id: user._id },
-      { $set: legacyUpdates, $unset: legacyUnsets },
-    );
+    await User.updateOne({ _id: user._id }, { $set: legacyUpdates, $unset: legacyUnsets });
     Object.assign(user, legacyUpdates);
     user.passwordHash = undefined;
     user.status = undefined;
@@ -116,6 +117,13 @@ export async function loginUser(emailInput, password, metadata) {
 
   if (!(await user.verifyPassword(password))) {
     user.failedLoginAttempts += 1;
+    if (user.failedLoginAttempts >= 3) {
+      await recordSecuritySignal({
+        userId: user._id,
+        category: 'login',
+        reason: 'Multiple failed sign-in attempts were detected.',
+      });
+    }
     if (user.failedLoginAttempts >= maxLoginAttempts) {
       user.lockUntil = new Date(Date.now() + LOCK_MINUTES * 60 * 1000);
       user.failedLoginAttempts = maxLoginAttempts;
@@ -169,6 +177,17 @@ export async function requestPasswordReset(email, metadata = {}) {
     expiresAt: new Date(Date.now() + env.PASSWORD_RESET_EXPIRES_MINUTES * 60 * 1000),
     createdByIp: metadata.ip || '',
   });
+  const recentResetRequests = await PasswordResetToken.countDocuments({
+    user: user._id,
+    createdAt: { $gte: new Date(Date.now() - 60 * 60 * 1000) },
+  });
+  if (recentResetRequests >= 3) {
+    await recordSecuritySignal({
+      userId: user._id,
+      category: 'password_reset',
+      reason: 'Multiple password reset requests were detected within one hour.',
+    });
+  }
   await sendPasswordResetEmail({ to: user.email, name: user.firstName, token });
 }
 
@@ -203,6 +222,7 @@ export async function resetPassword(token, password) {
     targetType: 'User',
     targetId: user._id,
   });
+  return user._id;
 }
 
 export async function changePassword(userId, currentPassword, newPassword) {

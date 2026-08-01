@@ -160,6 +160,8 @@ export default function ProfilePage() {
                   <th className="px-6 py-3">Time</th>
                   <th className="px-6 py-3">Result</th>
                   <th className="px-6 py-3">IP address</th>
+                  <th className="px-6 py-3">Device</th>
+                  <th className="px-6 py-3">Logout</th>
                 </tr>
               </thead>
               <tbody>
@@ -168,6 +170,15 @@ export default function ProfilePage() {
                     <td className="px-6 py-4">{new Date(item.createdAt).toLocaleString()}</td>
                     <td className="px-6 py-4 capitalize">{item.reason.replace('_', ' ')}</td>
                     <td className="px-6 py-4">{item.ipAddress || 'Unknown'}</td>
+                    <td className="px-6 py-4">
+                      {item.browser || 'Unknown'} · {item.operatingSystem || 'Unknown'} ·{' '}
+                      {item.device || 'Unknown'}
+                    </td>
+                    <td className="px-6 py-4">
+                      {item.logoutAt
+                        ? new Date(item.logoutAt).toLocaleString()
+                        : 'Active or expired'}
+                    </td>
                   </tr>
                 ))}
               </tbody>

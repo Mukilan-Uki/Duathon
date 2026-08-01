@@ -13,11 +13,15 @@ const auditLogSchema = new mongoose.Schema(
     targetId: { type: mongoose.Schema.Types.ObjectId, required: true, index: true },
     ipAddress: { type: String, default: '' },
     userAgent: { type: String, default: '' },
+    requestMethod: { type: String, default: '', maxlength: 10 },
+    outcome: { type: String, enum: ['success', 'failure'], default: 'success', index: true },
     before: { type: mongoose.Schema.Types.Mixed, default: null },
     after: { type: mongoose.Schema.Types.Mixed, default: null },
   },
   { timestamps: true },
 );
+
+auditLogSchema.index({ createdAt: -1, action: 1, targetType: 1 });
 
 auditLogSchema.pre(
   ['updateOne', 'updateMany', 'findOneAndUpdate', 'deleteOne', 'deleteMany'],

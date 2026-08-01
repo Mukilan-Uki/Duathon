@@ -9,6 +9,7 @@ const mocks = vi.hoisted(() => ({
   transactionFindOne: vi.fn(),
   transactionCreate: vi.fn(),
   transactionAggregate: vi.fn(),
+  transactionCountDocuments: vi.fn(),
   connectionTransaction: vi.fn(),
   createAuditLog: vi.fn(),
   createNotification: vi.fn(),
@@ -43,6 +44,7 @@ vi.mock('../models/Transaction.js', () => ({
     findOne: mocks.transactionFindOne,
     create: mocks.transactionCreate,
     aggregate: mocks.transactionAggregate,
+    countDocuments: mocks.transactionCountDocuments,
   },
 }));
 vi.mock('../models/SuspiciousActivity.js', () => ({
@@ -144,11 +146,13 @@ describe('transaction service', () => {
     mocks.beneficiaryUpdateOne.mockReset();
     mocks.transactionFindOne.mockReset();
     mocks.transactionAggregate.mockReset();
+    mocks.transactionCountDocuments.mockReset();
     mocks.transactionCreate.mockReset();
     mocks.connectionTransaction.mockReset();
     mocks.connectionTransaction.mockImplementation(async (callback) => callback({ id: 'session' }));
     mocks.transactionFindOne.mockImplementation(() => queryResult(null));
     mocks.transactionAggregate.mockImplementation(() => queryResult([]));
+    mocks.transactionCountDocuments.mockResolvedValue(0);
     mocks.beneficiaryUpdateOne.mockResolvedValue({ matchedCount: 1, modifiedCount: 1 });
     mocks.transactionCreate.mockImplementation(async (records) => {
       if (!Array.isArray(records)) return { _id: 'failed-transaction', ...records };

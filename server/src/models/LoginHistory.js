@@ -12,6 +12,10 @@ const loginHistorySchema = new mongoose.Schema(
     },
     ipAddress: { type: String, default: '' },
     userAgent: { type: String, default: '' },
+    browser: { type: String, default: 'Unknown' },
+    operatingSystem: { type: String, default: 'Unknown' },
+    device: { type: String, default: 'Unknown' },
+    logoutAt: { type: Date, default: null },
   },
   { timestamps: true },
 );

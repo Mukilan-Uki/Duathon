@@ -12,7 +12,7 @@ export async function createNotification(input, session) {
 }
 
 export async function listNotifications(userId, { page, limit, unreadOnly }) {
-  const query = { recipient: userId };
+  const query = { recipient: userId, deletedAt: null };
   if (unreadOnly) query.readAt = null;
   const [notifications, total, unread] = await Promise.all([
     Notification.find(query)
@@ -20,7 +20,7 @@ export async function listNotifications(userId, { page, limit, unreadOnly }) {
       .skip((page - 1) * limit)
       .limit(limit),
     Notification.countDocuments(query),
-    Notification.countDocuments({ recipient: userId, readAt: null }),
+    Notification.countDocuments({ recipient: userId, deletedAt: null, readAt: null }),
   ]);
   return {
     notifications,
@@ -31,7 +31,7 @@ export async function listNotifications(userId, { page, limit, unreadOnly }) {
 
 export async function markNotificationRead(userId, notificationId) {
   const notification = await Notification.findOneAndUpdate(
-    { _id: notificationId, recipient: userId },
+    { _id: notificationId, recipient: userId, deletedAt: null },
     { $set: { readAt: new Date() } },
     { new: true },
   );
@@ -41,10 +41,36 @@ export async function markNotificationRead(userId, notificationId) {
 
 export async function markAllNotificationsRead(userId) {
   const result = await Notification.updateMany(
-    { recipient: userId, readAt: null },
+    { recipient: userId, deletedAt: null, readAt: null },
     { $set: { readAt: new Date() } },
   );
   return result.modifiedCount;
+}
+
+export async function deleteNotification(userId, notificationId) {
+  const notification = await Notification.findOneAndUpdate(
+    { _id: notificationId, recipient: userId, deletedAt: null },
+    { $set: { deletedAt: new Date() } },
+    { new: true },
+  );
+  if (!notification) throw new AppError('Notification not found', 404);
+}
+
+export async function broadcastNotification({ title, message, audience }) {
+  const userQuery = audience === 'all' ? {} : { role: audience };
+  const userIds = await User.find(userQuery).distinct('_id');
+  if (!userIds.length) return 0;
+  await Notification.insertMany(
+    userIds.map((recipient) => ({
+      recipient,
+      type: 'announcement',
+      title,
+      message,
+      targetType: 'SystemAnnouncement',
+    })),
+    { ordered: false },
+  );
+  return userIds.length;
 }
 
 export async function updateNotificationPreferences(userId, preferences) {

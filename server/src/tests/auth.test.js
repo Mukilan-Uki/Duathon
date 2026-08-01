@@ -35,6 +35,10 @@ vi.mock('../middleware/authenticate.js', () => ({
   },
 }));
 
+vi.mock('../services/auditService.js', () => ({
+  createAuditLog: vi.fn(),
+}));
+
 vi.mock('../models/User.js', () => ({
   default: {
     findById: vi.fn().mockResolvedValue({

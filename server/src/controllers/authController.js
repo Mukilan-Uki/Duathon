@@ -11,12 +11,13 @@ import {
   verifyEmail,
 } from '../services/authService.js';
 import { revokeRefreshToken, rotateRefreshToken } from '../services/tokenService.js';
+import { createAuditLog } from '../services/auditService.js';
 import { successResponse } from '../utils/apiResponse.js';
 
 const COOKIE_NAME = 'duothan_refresh';
 
 function metadata(req) {
-  return { ip: req.ip, userAgent: req.get('user-agent') || '' };
+  return { ip: req.ip, userAgent: req.get('user-agent') || '', method: req.method };
 }
 
 function setRefreshCookie(res, token) {
@@ -40,6 +41,15 @@ function clearRefreshCookie(res) {
 
 export async function register(req, res) {
   const user = await registerUser(req.body);
+  await createAuditLog({
+    actor: user._id,
+    action: 'USER_REGISTERED',
+    targetType: 'User',
+    targetId: user._id,
+    before: null,
+    after: { role: user.role, accountStatus: user.accountStatus },
+    metadata: metadata(req),
+  });
   return successResponse(res, {
     statusCode: 201,
     message: 'Registration successful. Check your email for the verification code',
@@ -61,6 +71,15 @@ export async function resend(req, res) {
 
 export async function login(req, res) {
   const result = await loginUser(req.body.email, req.body.password, metadata(req));
+  await createAuditLog({
+    actor: result.user._id,
+    action: 'USER_LOGIN',
+    targetType: 'User',
+    targetId: result.user._id,
+    before: null,
+    after: { successful: true },
+    metadata: metadata(req),
+  });
   setRefreshCookie(res, result.refreshToken);
   return successResponse(res, {
     message: 'Login successful',
@@ -83,7 +102,23 @@ export async function refresh(req, res) {
 }
 
 export async function logout(req, res) {
-  await revokeRefreshToken(req.cookies[COOKIE_NAME], metadata(req));
+  const userId = await revokeRefreshToken(req.cookies[COOKIE_NAME], metadata(req));
+  if (userId) {
+    await LoginHistory.findOneAndUpdate(
+      { user: userId, successful: true, logoutAt: null },
+      { $set: { logoutAt: new Date() } },
+      { sort: { createdAt: -1 } },
+    );
+    await createAuditLog({
+      actor: userId,
+      action: 'USER_LOGOUT',
+      targetType: 'User',
+      targetId: userId,
+      before: null,
+      after: { successful: true },
+      metadata: metadata(req),
+    });
+  }
   clearRefreshCookie(res);
   return successResponse(res, { message: 'Logout successful' });
 }
@@ -96,13 +131,33 @@ export async function forgotPassword(req, res) {
 }
 
 export async function reset(req, res) {
-  await resetPassword(req.body.token, req.body.password);
+  const userId = await resetPassword(req.body.token, req.body.password);
+  if (userId) {
+    await createAuditLog({
+      actor: userId,
+      action: 'PASSWORD_RESET',
+      targetType: 'User',
+      targetId: userId,
+      before: null,
+      after: { sessionsRevoked: true },
+      metadata: metadata(req),
+    });
+  }
   clearRefreshCookie(res);
   return successResponse(res, { message: 'Password reset successfully. Please sign in' });
 }
 
 export async function updatePassword(req, res) {
   await changePassword(req.user._id, req.body.currentPassword, req.body.newPassword);
+  await createAuditLog({
+    actor: req.user._id,
+    action: 'PASSWORD_CHANGED',
+    targetType: 'User',
+    targetId: req.user._id,
+    before: null,
+    after: { sessionsRevoked: true },
+    metadata: metadata(req),
+  });
   clearRefreshCookie(res);
   return successResponse(res, { message: 'Password changed successfully. Please sign in again' });
 }

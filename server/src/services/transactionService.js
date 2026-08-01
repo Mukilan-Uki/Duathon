@@ -9,6 +9,7 @@ import { generateTransferReference } from '../utils/transactionReference.js';
 import { createAuditLog } from './auditService.js';
 import { createNotification } from './notificationService.js';
 import { getNumericSetting } from './settingService.js';
+import { flagAutomaticTransaction, recordSecuritySignal } from './securityMonitoringService.js';
 
 const ACTIVE_TRANSFER_STATUSES = ['pending', 'processing', 'completed'];
 
@@ -103,13 +104,14 @@ async function waitForConcurrentIdempotentResult(userId, idempotencyKey, fingerp
 }
 
 async function getTransferLimits() {
-  const [minimum, maximum, daily, maximumPerDay] = await Promise.all([
+  const [minimum, maximum, daily, maximumPerDay, suspicious] = await Promise.all([
     getNumericSetting('transfer_min_minor', env.TRANSFER_MIN_MINOR),
     getNumericSetting('transfer_max_minor', env.TRANSFER_MAX_MINOR),
     getNumericSetting('transfer_daily_limit_minor', env.TRANSFER_DAILY_LIMIT_MINOR),
     getNumericSetting('transfer_max_per_day', env.TRANSFER_MAX_PER_DAY),
+    getNumericSetting('suspicious_transfer_minor', env.SUSPICIOUS_TRANSFER_MINOR),
   ]);
-  return { minimum, maximum, daily, maximumPerDay };
+  return { minimum, maximum, daily, maximumPerDay, suspicious };
 }
 
 async function enforceDailyLimits(userId, amount, limits, session) {
@@ -304,6 +306,16 @@ export async function transferMoney(userId, input, idempotencyKey, metadata) {
         transaction.balanceAfterMinor = debited.availableBalanceMinor;
         await transaction.save({ session });
 
+        if (normalized.amount >= limits.suspicious) {
+          await flagAutomaticTransaction({
+            transaction: transaction._id,
+            customer: sender.owner,
+            category: 'transaction',
+            reason: `Transfer met the configured large-transfer threshold (${limits.suspicious} minor units).`,
+            session,
+          });
+        }
+
         await createAuditLog({
           actor: userId,
           action: 'TRANSFER_COMPLETED',
@@ -423,6 +435,18 @@ export async function transferMoney(userId, input, idempotencyKey, metadata) {
         targetType: 'Transaction',
         targetId: failed._id,
       });
+      const recentFailures = await Transaction.countDocuments({
+        senderUser: failureContext.sender.owner,
+        status: 'failed',
+        createdAt: { $gte: new Date(Date.now() - 60 * 60 * 1000) },
+      });
+      if (recentFailures >= 3) {
+        await recordSecuritySignal({
+          userId: failureContext.sender.owner,
+          category: 'transfer_attempts',
+          reason: 'Repeated transfer failures were detected within one hour.',
+        });
+      }
     }
     throw error;
   }

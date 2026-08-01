@@ -3,6 +3,7 @@ import OTP from '../models/OTP.js';
 import { AppError } from '../utils/AppError.js';
 import { createOtpCode, hashOtp, timingSafeEqualHex } from '../utils/security.js';
 import { sendOtpEmail } from './emailService.js';
+import { recordSecuritySignal } from './securityMonitoringService.js';
 
 export async function issueOtp(user, purpose) {
   const latest = await OTP.findOne({ user: user._id, purpose })
@@ -10,8 +11,7 @@ export async function issueOtp(user, purpose) {
     .select('+resendCount +resendWindowStartedAt');
   const windowMs = env.VERIFICATION_RESEND_WINDOW_MINUTES * 60 * 1000;
   const withinWindow =
-    latest?.resendWindowStartedAt &&
-    latest.resendWindowStartedAt.getTime() > Date.now() - windowMs;
+    latest?.resendWindowStartedAt && latest.resendWindowStartedAt.getTime() > Date.now() - windowMs;
   if (withinWindow && latest.resendCount >= env.VERIFICATION_RESEND_LIMIT) {
     throw new AppError('Verification resend limit reached. Try again later', 429);
   }
@@ -57,6 +57,13 @@ export async function consumeOtp(userId, purpose, code) {
 
   if (!matches) {
     record.attempts += 1;
+    if (record.attempts >= 3) {
+      await recordSecuritySignal({
+        userId,
+        category: 'otp',
+        reason: 'Multiple invalid security-code attempts were detected.',
+      });
+    }
     if (record.attempts >= record.maxAttempts) record.consumedAt = new Date();
     await record.save();
     throw new AppError('The security code is invalid or has expired', 400);

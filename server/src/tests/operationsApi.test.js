@@ -7,6 +7,8 @@ vi.mock('../services/notificationService.js', () => ({
   markNotificationRead: vi.fn(),
   markAllNotificationsRead: vi.fn(),
   updateNotificationPreferences: vi.fn(),
+  deleteNotification: vi.fn(),
+  broadcastNotification: vi.fn(),
 }));
 vi.mock('../services/operationsService.js', () => ({
   listAuditLogs: vi.fn(),
@@ -45,6 +47,37 @@ describe('Phase 8 operations API', () => {
       '507f1f77bcf86cd799439011',
       expect.objectContaining({ page: 1 }),
     );
+  });
+
+  it('supports the canonical unread feed and owned soft deletion endpoints', async () => {
+    notificationService.listNotifications.mockResolvedValue({
+      notifications: [],
+      unread: 2,
+      pagination: { page: 1, limit: 20, total: 2, pages: 1 },
+    });
+    await request(app).get('/api/notifications/unread').expect(200);
+    expect(notificationService.listNotifications).toHaveBeenCalledWith(
+      '507f1f77bcf86cd799439011',
+      expect.objectContaining({ unreadOnly: true }),
+    );
+
+    await request(app).delete('/api/notifications/507f1f77bcf86cd799439020').expect(200);
+    expect(notificationService.deleteNotification).toHaveBeenCalledWith(
+      '507f1f77bcf86cd799439011',
+      '507f1f77bcf86cd799439020',
+    );
+  });
+
+  it('allows only administrators to broadcast announcements', async () => {
+    const payload = { title: 'Maintenance', message: 'Services restart tonight.', audience: 'all' };
+    await request(app).post('/api/admin/notifications/broadcast').send(payload).expect(403);
+    notificationService.broadcastNotification.mockResolvedValue(12);
+    const response = await request(app)
+      .post('/api/admin/notifications/broadcast')
+      .set('x-test-role', 'admin')
+      .send(payload)
+      .expect(201);
+    expect(response.body.data.sent).toBe(12);
   });
 
   it('prevents customers from flagging transactions', async () => {

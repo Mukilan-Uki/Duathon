@@ -2,13 +2,44 @@ import AuditLog from '../models/AuditLog.js';
 import SuspiciousActivity from '../models/SuspiciousActivity.js';
 import SystemSetting from '../models/SystemSetting.js';
 import Transaction from '../models/Transaction.js';
+import User from '../models/User.js';
 import { AppError } from '../utils/AppError.js';
 import { createAuditLog } from './auditService.js';
 
-export async function listAuditLogs({ page, limit, action, targetType }) {
+export async function listAuditLogs({
+  page,
+  limit,
+  action,
+  targetType,
+  userId,
+  search,
+  dateFrom,
+  dateTo,
+}) {
   const query = {};
   if (action) query.action = action;
   if (targetType) query.targetType = targetType;
+  if (userId) query.actor = userId;
+  if (dateFrom || dateTo) {
+    query.createdAt = {};
+    if (dateFrom) query.createdAt.$gte = new Date(`${dateFrom}T00:00:00.000Z`);
+    if (dateTo) query.createdAt.$lte = new Date(`${dateTo}T23:59:59.999Z`);
+  }
+  if (search) {
+    const escaped = search.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const matchingUsers = await User.find({
+      $or: [
+        { email: { $regex: escaped, $options: 'i' } },
+        { firstName: { $regex: escaped, $options: 'i' } },
+        { lastName: { $regex: escaped, $options: 'i' } },
+      ],
+    }).distinct('_id');
+    query.$or = [
+      { actor: { $in: matchingUsers } },
+      { action: { $regex: escaped, $options: 'i' } },
+      { targetType: { $regex: escaped, $options: 'i' } },
+    ];
+  }
   const [logs, total] = await Promise.all([
     AuditLog.find(query)
       .populate('actor', 'firstName lastName email role')

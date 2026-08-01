@@ -30,6 +30,7 @@ const menus = {
     { to: '/account-reviews', label: 'Account reviews', icon: FileCheck2 },
     { to: '/loan-reviews', label: 'Loan reviews', icon: WalletCards },
     { to: '/transaction-monitoring', label: 'Monitoring', icon: SearchCheck },
+    { to: '/notifications', label: 'Notifications', icon: Bell },
     { to: '/profile', label: 'Profile', icon: UserRound },
   ],
   admin: [
@@ -38,6 +39,7 @@ const menus = {
     { to: '/loan-reviews', label: 'Loan reviews', icon: WalletCards },
     { to: '/transaction-monitoring', label: 'Monitoring', icon: SearchCheck },
     { to: '/admin/operations', label: 'System & audit', icon: Settings },
+    { to: '/notifications', label: 'Notifications', icon: Bell },
     { to: '/profile', label: 'Profile', icon: UserRound },
   ],
 };

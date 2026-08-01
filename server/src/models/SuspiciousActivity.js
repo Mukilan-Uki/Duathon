@@ -14,11 +14,18 @@ const suspiciousActivitySchema = new mongoose.Schema(
     transaction: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Transaction',
-      required: true,
+      default: null,
       unique: true,
+      sparse: true,
       index: true,
     },
     customer: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true, index: true },
+    category: {
+      type: String,
+      enum: ['transaction', 'login', 'otp', 'password_reset', 'transfer_attempts'],
+      default: 'transaction',
+      index: true,
+    },
     reason: { type: String, required: true, maxlength: 500 },
     source: { type: String, enum: ['automatic', 'manual'], required: true },
     status: {
@@ -34,5 +41,7 @@ const suspiciousActivitySchema = new mongoose.Schema(
   },
   { timestamps: true },
 );
+
+suspiciousActivitySchema.index({ customer: 1, category: 1, status: 1, createdAt: -1 });
 
 export default mongoose.model('SuspiciousActivity', suspiciousActivitySchema);

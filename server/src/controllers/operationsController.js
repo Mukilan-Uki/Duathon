@@ -1,4 +1,6 @@
 import {
+  broadcastNotification,
+  deleteNotification,
   listNotifications,
   markAllNotificationsRead,
   markNotificationRead,
@@ -20,6 +22,12 @@ export async function notifications(req, res) {
   return successResponse(res, { data: await listNotifications(req.user._id, req.query) });
 }
 
+export async function unreadNotifications(req, res) {
+  return successResponse(res, {
+    data: await listNotifications(req.user._id, { ...req.query, unreadOnly: true }),
+  });
+}
+
 export async function readNotification(req, res) {
   const notification = await markNotificationRead(req.user._id, req.params.notificationId);
   return successResponse(res, { message: 'Notification marked as read', data: { notification } });
@@ -28,6 +36,20 @@ export async function readNotification(req, res) {
 export async function readAllNotifications(req, res) {
   const updated = await markAllNotificationsRead(req.user._id);
   return successResponse(res, { message: 'All notifications marked as read', data: { updated } });
+}
+
+export async function removeNotification(req, res) {
+  await deleteNotification(req.user._id, req.params.notificationId);
+  return successResponse(res, { message: 'Notification deleted' });
+}
+
+export async function broadcast(req, res) {
+  const sent = await broadcastNotification(req.body);
+  return successResponse(res, {
+    statusCode: 201,
+    message: 'Announcement broadcast successfully',
+    data: { sent },
+  });
 }
 
 export async function preferences(req, res) {
