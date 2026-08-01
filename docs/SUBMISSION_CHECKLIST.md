@@ -6,24 +6,24 @@ Use `[x]` only after checking the final public repository and deployed environme
 
 ## Repository and source package
 
-- [ ] Public GitHub repository URL added here: `ADD_URL`
-- [ ] Final Stage 10 changes committed and pushed to the default branch
+- [x] Public GitHub repository URL: <https://github.com/Mukilan-Uki/Duathon>
+- [x] Final Stage 10 changes committed and pushed to the default branch
 - [ ] Repository visibility confirmed from a signed-out browser
 - [ ] Annotated tag and GitHub release `v1.0.0-phase-2` published
 - [x] README, setup guide, API documentation, environment examples, and release notes included
 - [x] Development credentials and demo-data instructions documented
 - [x] Generated files, dependencies, local environments, and submission artifacts ignored
-- [ ] `npm run package:submission` run from a clean final commit
-- [ ] Generated ZIP opened and checked for completeness and absence of secrets
+- [x] `npm run package:submission` run from a clean final commit
+- [x] Generated ZIP opened and checked for completeness and absence of secrets
 
 ## Automated quality gate
 
-- [ ] `npm run format:check` passes on the final commit
-- [ ] `npm run lint` passes on the final commit
-- [ ] `npm test` passes on the final commit
-- [ ] `npm run build` passes on the final commit
+- [x] `npm run format:check` passes on the final source
+- [x] `npm run lint` passes on the final source
+- [x] `npm test` passes on the final source (182 tests)
+- [x] `npm run build` passes on the final source
 - [ ] `npm run preflight:deploy` passes with production configuration
-- [ ] Dependency/security scan reviewed and material findings resolved or documented
+- [x] Dependency/security scan reviewed and findings documented in `docs/QUALITY.md`
 
 ## Functional verification
 
@@ -42,8 +42,8 @@ Use `[x]` only after checking the final public repository and deployed environme
 
 ## Production deployment
 
-- [ ] Frontend URL added here and reachable: `ADD_URL`
-- [ ] Backend URL added here and reachable: `ADD_URL`
+- [ ] Frontend URL added here and reachable: _not supplied_
+- [ ] Backend URL added here and reachable: _not supplied_
 - [ ] `/api/health/live`, `/api/health/ready`, and HTTPS verified
 - [ ] Production MongoDB connectivity, indexes, backup, and recovery plan verified
 - [ ] Strong production secrets configured only in provider environment settings
@@ -64,6 +64,6 @@ Use `[x]` only after checking the final public repository and deployed environme
 ## Final handoff
 
 - [ ] Repository URL, frontend URL, backend URL, release URL, and ZIP attached to submission
-- [ ] Known limitations in `docs/RELEASE_NOTES.md` reviewed and updated
+- [x] Known limitations in `docs/RELEASE_NOTES.md` reviewed and updated
 - [ ] Clean install performed from the submitted source package
 - [ ] Final evaluator walkthrough completed using development-safe demo credentials

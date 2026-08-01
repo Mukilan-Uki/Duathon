@@ -66,7 +66,7 @@ Demo seeding is intentionally blocked in production and requires an explicit pas
 npm run seed:demo
 ```
 
-The idempotent seed creates verified Customer, Employee, and Administrator users plus an active customer savings account. Demo email addresses are printed after a successful seed. Use demo data only in local or dedicated test databases.
+The idempotent seed creates an administrator, employee, two adult customers, a junior customer, active accounts, family and junior banking fixtures, a loan application, trusted-device examples, notifications, audit data, and sample transactions. See [Development demo credentials](docs/DEMO_CREDENTIALS.md). Use demo data only in local or dedicated test databases.
 
 ## Commands
 
@@ -79,6 +79,8 @@ npm run lint
 npm run format:check
 npm test
 npm run seed:demo
+npm run preflight:deploy
+npm run package:submission
 ```
 
 ## Project layout
@@ -114,6 +116,9 @@ docs/                   API, architecture, security, quality, and user guides
 - [Disaster recovery](docs/DISASTER_RECOVERY.md)
 - [Known limitations](docs/KNOWN_LIMITATIONS.md)
 - [Contributing](docs/CONTRIBUTING.md)
+- [Release notes](docs/RELEASE_NOTES.md)
+- [Development demo credentials](docs/DEMO_CREDENTIALS.md)
+- [Submission handoff](docs/SUBMISSION.md)
 
 ## Screenshots
 
@@ -135,7 +140,7 @@ Deployment URLs are intentionally left blank until the owner completes and verif
 
 - Frontend: _not deployed/verified in this workspace_
 - Backend: _not deployed/verified in this workspace_
-- Repository: _add the final public GitHub URL_
+- Repository: <https://github.com/Mukilan-Uki/Duathon>
 
 ## Problem and solution
 
@@ -143,7 +148,7 @@ Many prototype banking systems demonstrate screens without enforcing ownership, 
 
 ## Team
 
-Add the final team member names, student identifiers, and responsibilities before submission. No names were inferred or invented by the implementation process.
+Team names and student identifiers are intentionally not stored in this public repository. Provide them directly in the official submission form if required.
 
 ## License
 

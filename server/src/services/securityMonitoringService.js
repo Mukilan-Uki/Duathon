@@ -18,7 +18,13 @@ export async function recordSecuritySignal({ userId, category, reason }) {
   });
 }
 
-export async function flagAutomaticTransaction({ transaction, customer, category, reason, session }) {
+export async function flagAutomaticTransaction({
+  transaction,
+  customer,
+  category,
+  reason,
+  session,
+}) {
   const [activity] = await SuspiciousActivity.create(
     [
       {

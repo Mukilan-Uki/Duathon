@@ -27,10 +27,6 @@ router.patch(
   validate(notificationIdSchema),
   asyncHandler(readNotification),
 );
-router.delete(
-  '/:notificationId',
-  validate(notificationIdSchema),
-  asyncHandler(removeNotification),
-);
+router.delete('/:notificationId', validate(notificationIdSchema), asyncHandler(removeNotification));
 
 export default router;

@@ -26,7 +26,7 @@ Keyboard users can use the **Skip to main content** link when it appears on focu
 
 ## Demo roles
 
-The controlled local seed creates one Customer, Employee, and Administrator identity. Run it only against a dedicated development database using the instructions in the README. All three accounts use the locally supplied `DEMO_SEED_PASSWORD`; the password is never stored in source control. Demo credentials must not be enabled or shared for a production deployment.
+The controlled local seed creates an administrator, employee, two adult customers, a junior customer, and connected banking fixtures. Run it only against a dedicated development database using the instructions in the README. All demo accounts use the locally supplied `DEMO_SEED_PASSWORD`; the password is never stored in source control. See `DEMO_CREDENTIALS.md` for roles and relationships. Demo credentials must not be enabled or shared for a production deployment.
 
 ## Bank accounts
 
