@@ -37,6 +37,7 @@ const FamilyGoalsPage = load(() => import('../pages/family/FamilyGoalsPage'));
 const FamilyActivityPage = load(() => import('../pages/family/FamilyActivityPage'));
 const JuniorDashboardPage = load(() => import('../pages/junior/JuniorDashboardPage'));
 const GuardianJuniorPage = load(() => import('../pages/junior/GuardianJuniorPage'));
+const SecurityCentrePage = load(() => import('../pages/security/SecurityCentrePage'));
 
 function RouteLoading() {
   return (
@@ -60,6 +61,7 @@ export default function AppRoutes() {
           <Route path="reset-password" element={<ResetPasswordPage />} />
           <Route element={<ProtectedRoute />}>
             <Route path="profile" element={<ProfilePage />} />
+            <Route path="security" element={<SecurityCentrePage />} />
           </Route>
           <Route element={<ProtectedRoute />}>
             <Route element={<RoleProtectedRoute roles={['customer']} />}>

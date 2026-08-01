@@ -29,6 +29,7 @@ const menus = {
     { to: '/guardian/junior', label: 'Guardian controls', icon: ShieldCheck },
     { to: '/notifications', label: 'Notifications', icon: Bell },
     { to: '/profile', label: 'Profile', icon: UserRound },
+    { to: '/security', label: 'Security Centre', icon: ShieldCheck },
   ],
   employee: [
     { to: '/employee/dashboard', label: 'Overview', icon: LayoutDashboard },
@@ -36,6 +37,7 @@ const menus = {
     { to: '/loan-reviews', label: 'Loan reviews', icon: WalletCards },
     { to: '/transaction-monitoring', label: 'Monitoring', icon: SearchCheck },
     { to: '/profile', label: 'Profile', icon: UserRound },
+    { to: '/security', label: 'Security Centre', icon: ShieldCheck },
   ],
   admin: [
     { to: '/admin/dashboard', label: 'Overview', icon: LayoutDashboard },
@@ -44,6 +46,7 @@ const menus = {
     { to: '/transaction-monitoring', label: 'Monitoring', icon: SearchCheck },
     { to: '/admin/operations', label: 'System & audit', icon: Settings },
     { to: '/profile', label: 'Profile', icon: UserRound },
+    { to: '/security', label: 'Security Centre', icon: ShieldCheck },
   ],
 };
 
