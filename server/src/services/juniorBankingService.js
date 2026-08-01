@@ -299,6 +299,7 @@ export async function requestTransaction(actor, input, key) {
       },
       key,
       { ip: '', userAgent: 'junior-banking-service' },
+      { allowJunior: true },
     );
     request.status = 'completed';
     request.transaction = result.transaction._id;
@@ -356,6 +357,7 @@ export async function reviewRequest(actor, requestId, decision, reason, metadata
       },
       request.idempotencyKey,
       metadata,
+      { allowJunior: true },
     );
     request.status = 'completed';
     request.transaction = result.transaction._id;
@@ -501,4 +503,39 @@ export async function contributeJuniorGoal(actor, goalId, input, key, metadata) 
     await goal.save();
   }
   return { goal, transaction: result.transaction, duplicate: result.duplicate };
+}
+
+export async function getJuniorDashboard(actor) {
+  const profile = await JuniorProfile.findOne({ juniorUser: actor._id, status: 'active' });
+  if (!profile) throw new AppError('Active junior profile not found', 404);
+  const [account, allowances, goals, requests] = await Promise.all([
+    Account.findOne({ owner: actor._id, isJuniorRestricted: true, status: 'active' }),
+    JuniorAllowance.find({
+      juniorProfile: profile._id,
+      status: { $in: ['active', 'paused'] },
+    }).sort({ nextRunAt: 1 }),
+    JuniorSavingsGoal.find({ juniorProfile: profile._id }).sort({ createdAt: -1 }),
+    JuniorTransactionRequest.find({ juniorProfile: profile._id }).sort({ createdAt: -1 }).limit(10),
+  ]);
+  return {
+    profile,
+    account,
+    allowances,
+    goals,
+    requests,
+    educationTips: [
+      'Save a little from every allowance.',
+      'Never share your password or verification codes.',
+      'Review the recipient before requesting a transfer.',
+    ],
+  };
+}
+
+export async function listGuardianProfiles(actor) {
+  return JuniorProfile.find({
+    guardians: { $elemMatch: { user: actor._id } },
+    status: { $in: ['pending', 'active', 'suspended'] },
+  })
+    .populate('juniorUser', 'firstName lastName email')
+    .sort({ createdAt: -1 });
 }

@@ -11,6 +11,8 @@ import {
   UserRound,
   UsersRound,
   WalletCards,
+  Baby,
+  ShieldCheck,
 } from 'lucide-react';
 import { NavLink } from 'react-router-dom';
 
@@ -23,6 +25,8 @@ const menus = {
     { to: '/beneficiaries', label: 'Beneficiaries', icon: UsersRound },
     { to: '/loans', label: 'Loans', icon: WalletCards },
     { to: '/family', label: 'Family Banking', icon: UsersRound },
+    { to: '/junior', label: 'Junior Banking', icon: Baby },
+    { to: '/guardian/junior', label: 'Guardian controls', icon: ShieldCheck },
     { to: '/notifications', label: 'Notifications', icon: Bell },
     { to: '/profile', label: 'Profile', icon: UserRound },
   ],

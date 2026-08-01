@@ -9,6 +9,8 @@ import * as schemas from '../validators/juniorBankingValidators.js';
 const router = Router();
 const customer = authorize('customer');
 router.use(authenticate);
+router.get('/dashboard', customer, asyncHandler(controller.dashboard));
+router.get('/guardian/profiles', customer, asyncHandler(controller.guardianProfiles));
 router.post(
   '/profiles',
   customer,

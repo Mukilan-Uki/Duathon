@@ -190,3 +190,9 @@ export async function contributeGoal(req, res) {
     data: result,
   });
 }
+export async function dashboard(req, res) {
+  return successResponse(res, { data: await service.getJuniorDashboard(req.user) });
+}
+export async function guardianProfiles(req, res) {
+  return successResponse(res, { data: { profiles: await service.listGuardianProfiles(req.user) } });
+}

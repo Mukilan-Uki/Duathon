@@ -67,7 +67,9 @@ export function presentTransaction(transaction, viewer) {
     initiatedAt: value.initiatedAt || value.createdAt,
     completedAt: value.completedAt,
     senderAccount: maskAccountNumber(value.senderAccountNumber),
-    receiverAccount: maskAccountNumber(value.receiverAccountNumber || value.counterpartyAccountNumber),
+    receiverAccount: maskAccountNumber(
+      value.receiverAccountNumber || value.counterpartyAccountNumber,
+    ),
     counterpartyAccountNumber: sent
       ? maskAccountNumber(value.receiverAccountNumber || value.counterpartyAccountNumber)
       : maskAccountNumber(value.senderAccountNumber || value.counterpartyAccountNumber),
@@ -79,9 +81,7 @@ async function findIdempotentResult(userId, idempotencyKey, fingerprint, session
   const query = Transaction.findOne({
     $or: [{ senderUser: userId }, { owner: userId, direction: 'sent' }],
     idempotencyKey,
-  }).select(
-    '+idempotencyKey +requestHash +senderAccountNumber +receiverAccountNumber',
-  );
+  }).select('+idempotencyKey +requestHash +senderAccountNumber +receiverAccountNumber');
   if (session) query.session(session);
   const existing = await query;
   if (!existing) return null;
@@ -114,10 +114,7 @@ async function enforceDailyLimits(userId, amount, limits, session) {
   const pipeline = [
     {
       $match: {
-        $or: [
-          { senderUser: userId },
-          { owner: userId, direction: 'sent' },
-        ],
+        $or: [{ senderUser: userId }, { owner: userId, direction: 'sent' }],
         status: { $in: ACTIVE_TRANSFER_STATUSES },
         createdAt: { $gte: startOfUtcDay() },
       },
@@ -154,7 +151,7 @@ export async function validateRecipient(accountNumber) {
   };
 }
 
-export async function transferMoney(userId, input, idempotencyKey, metadata) {
+export async function transferMoney(userId, input, idempotencyKey, metadata, options = {}) {
   const normalized = { ...input, amount: input.amount ?? input.amountMinor };
   const limits = await getTransferLimits();
   if (normalized.amount < limits.minimum) {
@@ -186,6 +183,9 @@ export async function transferMoney(userId, input, idempotencyKey, metadata) {
           .session(session);
         if (!sender) throw new AppError('Sender account not found', 404);
         if (sender.status !== 'active') throw new AppError('Sender account is not active', 409);
+        if (sender.isJuniorRestricted && !options.allowJunior) {
+          throw new AppError('Junior accounts must use the supervised transfer workflow', 403);
+        }
 
         const receiver = await Account.findOne({ accountNumber: normalized.receiverAccountNumber })
           .select('+accountNumber')
@@ -244,7 +244,11 @@ export async function transferMoney(userId, input, idempotencyKey, metadata) {
           targetType: 'Transaction',
           targetId: transaction._id,
           before: null,
-          after: { senderAccount: sender._id, receiverAccount: receiver._id, amount: normalized.amount },
+          after: {
+            senderAccount: sender._id,
+            receiverAccount: receiver._id,
+            amount: normalized.amount,
+          },
           metadata,
           session,
         });
@@ -289,8 +293,14 @@ export async function transferMoney(userId, input, idempotencyKey, metadata) {
           action: 'TRANSFER_COMPLETED',
           targetType: 'Transaction',
           targetId: transaction._id,
-          before: { senderBalanceMinor: sender.availableBalanceMinor, receiverBalanceMinor: receiver.availableBalanceMinor },
-          after: { senderBalanceMinor: debited.availableBalanceMinor, receiverBalanceMinor: credited.availableBalanceMinor },
+          before: {
+            senderBalanceMinor: sender.availableBalanceMinor,
+            receiverBalanceMinor: receiver.availableBalanceMinor,
+          },
+          after: {
+            senderBalanceMinor: debited.availableBalanceMinor,
+            receiverBalanceMinor: credited.availableBalanceMinor,
+          },
           metadata,
           session,
         });
@@ -399,7 +409,8 @@ export async function listTransactions({ owner, filters, staff = false }) {
         ? [{ senderUser: owner }, { owner, direction: 'sent' }]
         : [{ receiverUser: owner }, { owner, direction: 'received' }];
   }
-  if (filters.type) query.$and = [{ $or: [{ transactionType: filters.type }, { type: filters.type }] }];
+  if (filters.type)
+    query.$and = [{ $or: [{ transactionType: filters.type }, { type: filters.type }] }];
   if (filters.status) query.status = filters.status;
   if (filters.dateFrom || filters.dateTo) {
     query.createdAt = {};
@@ -409,7 +420,9 @@ export async function listTransactions({ owner, filters, staff = false }) {
   if (filters.search) {
     const pattern = new RegExp(escapeRegex(filters.search), 'i');
     query.$and ||= [];
-    query.$and.push({ $or: [{ reference: pattern }, { transferReference: pattern }, { description: pattern }] });
+    query.$and.push({
+      $or: [{ reference: pattern }, { transferReference: pattern }, { description: pattern }],
+    });
   }
   const sort = filters.sort === 'oldest' ? 1 : -1;
   const skip = (filters.page - 1) * filters.limit;
@@ -422,8 +435,15 @@ export async function listTransactions({ owner, filters, staff = false }) {
     Transaction.countDocuments(query),
   ]);
   return {
-    transactions: records.map((record) => presentTransaction(record, staff ? null : { _id: owner })),
-    pagination: { page: filters.page, limit: filters.limit, total, pages: Math.max(1, Math.ceil(total / filters.limit)) },
+    transactions: records.map((record) =>
+      presentTransaction(record, staff ? null : { _id: owner }),
+    ),
+    pagination: {
+      page: filters.page,
+      limit: filters.limit,
+      total,
+      pages: Math.max(1, Math.ceil(total / filters.limit)),
+    },
   };
 }
 
@@ -434,11 +454,7 @@ export async function getTransactionForUser(transactionId, user) {
   if (!transaction) throw new AppError('Transaction not found', 404);
   if (user.role === 'customer') {
     const userId = user._id.toString();
-    const participants = [
-      transaction.senderUser,
-      transaction.receiverUser,
-      transaction.owner,
-    ]
+    const participants = [transaction.senderUser, transaction.receiverUser, transaction.owner]
       .filter(Boolean)
       .map((value) => value.toString());
     if (!participants.includes(userId)) {

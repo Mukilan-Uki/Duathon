@@ -35,6 +35,8 @@ const FamilyInvitationsPage = load(() => import('../pages/family/FamilyInvitatio
 const FamilyMembersPage = load(() => import('../pages/family/FamilyMembersPage'));
 const FamilyGoalsPage = load(() => import('../pages/family/FamilyGoalsPage'));
 const FamilyActivityPage = load(() => import('../pages/family/FamilyActivityPage'));
+const JuniorDashboardPage = load(() => import('../pages/junior/JuniorDashboardPage'));
+const GuardianJuniorPage = load(() => import('../pages/junior/GuardianJuniorPage'));
 
 function RouteLoading() {
   return (
@@ -72,6 +74,8 @@ export default function AppRoutes() {
               <Route path="family/members" element={<FamilyMembersPage />} />
               <Route path="family/goals" element={<FamilyGoalsPage />} />
               <Route path="family/activity" element={<FamilyActivityPage />} />
+              <Route path="junior" element={<JuniorDashboardPage />} />
+              <Route path="guardian/junior" element={<GuardianJuniorPage />} />
               <Route path="transfer" element={<TransferPage />} />
               <Route path="transfer/result" element={<TransferResultPage />} />
               <Route path="transactions" element={<TransactionHistoryPage />} />

@@ -21,6 +21,8 @@ const mocks = vi.hoisted(() => ({
   createJuniorGoal: vi.fn(),
   listJuniorGoals: vi.fn(),
   contributeJuniorGoal: vi.fn(),
+  getJuniorDashboard: vi.fn(),
+  listGuardianProfiles: vi.fn(),
 }));
 vi.mock('../services/juniorBankingService.js', () => mocks);
 vi.mock('../middleware/authenticate.js', () => ({
@@ -78,5 +80,15 @@ describe('Junior Banking API', () => {
       .send({ reason: 'Approved' })
       .expect(200);
     expect(response.body.data.request.status).toBe('completed');
+  });
+  it('returns the simplified junior dashboard', async () => {
+    mocks.getJuniorDashboard.mockResolvedValue({ account: null, goals: [], requests: [] });
+    const response = await request(app).get('/api/junior-banking/dashboard').expect(200);
+    expect(response.body.data.goals).toEqual([]);
+  });
+  it('lists only profiles authorized for the guardian', async () => {
+    mocks.listGuardianProfiles.mockResolvedValue([]);
+    await request(app).get('/api/junior-banking/guardian/profiles').expect(200);
+    expect(mocks.listGuardianProfiles).toHaveBeenCalledOnce();
   });
 });
