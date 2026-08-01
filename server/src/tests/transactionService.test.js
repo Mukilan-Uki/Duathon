@@ -1,8 +1,11 @@
+import crypto from 'node:crypto';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const mocks = vi.hoisted(() => ({
   accountFindOne: vi.fn(),
   accountFindOneAndUpdate: vi.fn(),
+  beneficiaryFindOne: vi.fn(),
+  beneficiaryUpdateOne: vi.fn(),
   transactionFindOne: vi.fn(),
   transactionCreate: vi.fn(),
   transactionAggregate: vi.fn(),
@@ -28,6 +31,13 @@ vi.mock('../models/Account.js', () => ({
   },
 }));
 
+vi.mock('../models/Beneficiary.js', () => ({
+  default: {
+    findOne: mocks.beneficiaryFindOne,
+    updateOne: mocks.beneficiaryUpdateOne,
+  },
+}));
+
 vi.mock('../models/Transaction.js', () => ({
   default: {
     findOne: mocks.transactionFindOne,
@@ -49,9 +59,8 @@ vi.mock('../services/settingService.js', () => ({
   getNumericSetting: vi.fn((_key, fallback) => fallback),
 }));
 
-const { createReversalFoundation, transferMoney } = await import(
-  '../services/transactionService.js'
-);
+const { createReversalFoundation, transferMoney } =
+  await import('../services/transactionService.js');
 
 function queryResult(value) {
   return {
@@ -77,15 +86,22 @@ const receiverId = {
 };
 const userId = { toString: () => '507f1f77bcf86cd799439011' };
 const receiverOwner = { toString: () => '507f1f77bcf86cd799439014' };
+const beneficiaryId = '507f1f77bcf86cd799439099';
 const input = {
   senderAccountId: '507f1f77bcf86cd799439012',
   receiverAccountNumber: '609876543210',
   amountMinor: 2500,
   description: 'Invoice payment',
 };
+const beneficiaryInput = {
+  senderAccountId: '507f1f77bcf86cd799439012',
+  beneficiaryId,
+  amountMinor: 2500,
+  description: 'Saved payee invoice',
+};
 const metadata = { ip: '127.0.0.1', userAgent: 'test' };
 
-function arrangeAccounts({ sufficient = true } = {}) {
+function arrangeAccounts({ sufficient = true, receiverStatus = 'active' } = {}) {
   const sender = {
     _id: senderId,
     owner: userId,
@@ -100,7 +116,7 @@ function arrangeAccounts({ sufficient = true } = {}) {
     owner: receiverOwner,
     accountNumber: '609876543210',
     currency: 'LKR',
-    status: 'active',
+    status: receiverStatus,
     availableBalanceMinor: 3000,
     ledgerBalanceMinor: 3000,
   };
@@ -116,14 +132,24 @@ function arrangeAccounts({ sufficient = true } = {}) {
     .mockReturnValueOnce(
       queryResult({ ...receiver, availableBalanceMinor: 5500, ledgerBalanceMinor: 5500 }),
     );
+  return { sender, receiver };
 }
 
 describe('transaction service', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mocks.accountFindOne.mockReset();
+    mocks.accountFindOneAndUpdate.mockReset();
+    mocks.beneficiaryFindOne.mockReset();
+    mocks.beneficiaryUpdateOne.mockReset();
+    mocks.transactionFindOne.mockReset();
+    mocks.transactionAggregate.mockReset();
+    mocks.transactionCreate.mockReset();
+    mocks.connectionTransaction.mockReset();
     mocks.connectionTransaction.mockImplementation(async (callback) => callback({ id: 'session' }));
     mocks.transactionFindOne.mockImplementation(() => queryResult(null));
     mocks.transactionAggregate.mockImplementation(() => queryResult([]));
+    mocks.beneficiaryUpdateOne.mockResolvedValue({ matchedCount: 1, modifiedCount: 1 });
     mocks.transactionCreate.mockImplementation(async (records) => {
       if (!Array.isArray(records)) return { _id: 'failed-transaction', ...records };
       return records.map((record, index) => ({
@@ -147,6 +173,26 @@ describe('transaction service', () => {
       status: 'pending',
     });
     expect(mocks.createAuditLog).toHaveBeenCalledTimes(2);
+  });
+
+  it('preserves the pre-Phase-5 idempotency fingerprint for manual transfers', async () => {
+    arrangeAccounts();
+
+    await transferMoney(userId, input, 'legacy-manual-key', metadata);
+
+    const legacyFingerprint = crypto
+      .createHash('sha256')
+      .update(
+        JSON.stringify({
+          userId: userId.toString(),
+          senderAccountId: input.senderAccountId,
+          receiverAccountNumber: input.receiverAccountNumber,
+          amount: input.amountMinor,
+          description: input.description,
+        }),
+      )
+      .digest('hex');
+    expect(mocks.transactionCreate.mock.calls[0][0][0].requestHash).toBe(legacyFingerprint);
   });
 
   it('rejects insufficient balance, skips the credit, and records a safe failure', async () => {
@@ -212,9 +258,7 @@ describe('transaction service', () => {
       availableBalanceMinor: 0,
       ledgerBalanceMinor: 0,
     };
-    mocks.accountFindOne.mockImplementation((query) =>
-      queryResult(query._id ? sender : receiver),
-    );
+    mocks.accountFindOne.mockImplementation((query) => queryResult(query._id ? sender : receiver));
     let debitAttempts = 0;
     mocks.accountFindOneAndUpdate.mockImplementation((query) => {
       if (query.owner) {
@@ -253,17 +297,245 @@ describe('transaction service', () => {
     expect(mocks.accountFindOneAndUpdate).toHaveBeenCalledTimes(2);
   });
 
+  it('resolves an owned active beneficiary by account reference and updates lastUsedAt in-session', async () => {
+    arrangeAccounts();
+    const beneficiary = {
+      _id: beneficiaryId,
+      owner: userId,
+      beneficiaryAccount: receiverId,
+      status: 'active',
+    };
+    mocks.beneficiaryFindOne.mockReturnValue(queryResult(beneficiary));
+
+    const result = await transferMoney(userId, beneficiaryInput, 'beneficiary-key-001', metadata);
+
+    expect(result.duplicate).toBe(false);
+    expect(mocks.beneficiaryFindOne).toHaveBeenCalledWith({
+      _id: beneficiaryId,
+      owner: userId,
+    });
+    expect(mocks.accountFindOne.mock.calls[1][0]).toEqual({ _id: receiverId });
+    expect(mocks.transactionCreate.mock.calls[0][0][0]).toMatchObject({
+      beneficiary: beneficiaryId,
+      receiverAccount: receiverId,
+      status: 'pending',
+    });
+    expect(mocks.beneficiaryUpdateOne).toHaveBeenCalledWith(
+      {
+        _id: beneficiaryId,
+        owner: userId,
+        $or: [{ status: 'active' }, { status: { $exists: false } }],
+      },
+      { $set: { lastUsedAt: expect.any(Date) } },
+      { session: { id: 'session' } },
+    );
+  });
+
+  it('allows a pre-Phase-5 beneficiary without a stored lifecycle status', async () => {
+    arrangeAccounts();
+    mocks.beneficiaryFindOne.mockReturnValue(
+      queryResult({
+        _id: beneficiaryId,
+        owner: userId,
+        beneficiaryAccount: receiverId,
+      }),
+    );
+
+    const result = await transferMoney(
+      userId,
+      beneficiaryInput,
+      'legacy-beneficiary-key',
+      metadata,
+    );
+
+    expect(result.duplicate).toBe(false);
+    expect(mocks.accountFindOne.mock.calls[1][0]).toEqual({ _id: receiverId });
+    expect(mocks.beneficiaryUpdateOne).toHaveBeenCalledOnce();
+  });
+
+  it('aborts when the beneficiary can no longer be marked as used', async () => {
+    arrangeAccounts();
+    mocks.beneficiaryFindOne.mockReturnValue(
+      queryResult({
+        _id: beneficiaryId,
+        beneficiaryAccount: receiverId,
+        status: 'active',
+      }),
+    );
+    mocks.beneficiaryUpdateOne.mockResolvedValue({ matchedCount: 0, modifiedCount: 0 });
+
+    await expect(
+      transferMoney(userId, beneficiaryInput, 'beneficiary-stale-key', metadata),
+    ).rejects.toMatchObject({ statusCode: 409 });
+
+    expect(mocks.beneficiaryUpdateOne).toHaveBeenCalledTimes(1);
+    expect(mocks.transactionCreate.mock.calls.at(-1)[0]).toMatchObject({
+      beneficiary: beneficiaryId,
+      status: 'failed',
+    });
+  });
+
+  it('does not allow another customer beneficiary to select a receiver account', async () => {
+    arrangeAccounts();
+    mocks.beneficiaryFindOne.mockReturnValue(queryResult(null));
+
+    await expect(
+      transferMoney(userId, beneficiaryInput, 'beneficiary-key-002', metadata),
+    ).rejects.toMatchObject({ statusCode: 404 });
+
+    expect(mocks.beneficiaryFindOne).toHaveBeenCalledWith({
+      _id: beneficiaryId,
+      owner: userId,
+    });
+    expect(mocks.accountFindOne).toHaveBeenCalledTimes(1);
+    expect(mocks.accountFindOneAndUpdate).not.toHaveBeenCalled();
+    expect(mocks.beneficiaryUpdateOne).not.toHaveBeenCalled();
+  });
+
+  it.each(['inactive', 'blocked'])('rejects a %s saved beneficiary', async (status) => {
+    arrangeAccounts();
+    mocks.beneficiaryFindOne.mockReturnValue(
+      queryResult({
+        _id: beneficiaryId,
+        beneficiaryAccount: receiverId,
+        status,
+      }),
+    );
+
+    await expect(
+      transferMoney(userId, beneficiaryInput, `beneficiary-${status}-key`, metadata),
+    ).rejects.toMatchObject({ statusCode: 409 });
+
+    expect(mocks.accountFindOne).toHaveBeenCalledTimes(1);
+    expect(mocks.accountFindOneAndUpdate).not.toHaveBeenCalled();
+    expect(mocks.beneficiaryUpdateOne).not.toHaveBeenCalled();
+  });
+
+  it('rejects a beneficiary whose linked account can no longer receive transfers', async () => {
+    arrangeAccounts({ receiverStatus: 'suspended' });
+    mocks.beneficiaryFindOne.mockReturnValue(
+      queryResult({
+        _id: beneficiaryId,
+        beneficiaryAccount: receiverId,
+        status: 'active',
+      }),
+    );
+
+    await expect(
+      transferMoney(userId, beneficiaryInput, 'beneficiary-key-003', metadata),
+    ).rejects.toMatchObject({ statusCode: 409 });
+
+    expect(mocks.accountFindOneAndUpdate).not.toHaveBeenCalled();
+    expect(mocks.beneficiaryUpdateOne).not.toHaveBeenCalled();
+  });
+
+  it('does not update lastUsedAt when a beneficiary transfer fails for insufficient funds', async () => {
+    arrangeAccounts({ sufficient: false });
+    mocks.beneficiaryFindOne.mockReturnValue(
+      queryResult({
+        _id: beneficiaryId,
+        beneficiaryAccount: receiverId,
+        status: 'active',
+      }),
+    );
+
+    await expect(
+      transferMoney(userId, beneficiaryInput, 'beneficiary-key-004', metadata),
+    ).rejects.toMatchObject({ statusCode: 422 });
+
+    expect(mocks.beneficiaryUpdateOne).not.toHaveBeenCalled();
+    expect(mocks.transactionCreate.mock.calls.at(-1)[0]).toMatchObject({
+      beneficiary: beneficiaryId,
+      status: 'failed',
+    });
+  });
+
+  it('does not update lastUsedAt when the receiver becomes inactive after debit', async () => {
+    arrangeAccounts();
+    mocks.beneficiaryFindOne.mockReturnValue(
+      queryResult({
+        _id: beneficiaryId,
+        beneficiaryAccount: receiverId,
+        status: 'active',
+      }),
+    );
+    mocks.accountFindOneAndUpdate
+      .mockReset()
+      .mockReturnValueOnce(queryResult({ availableBalanceMinor: 7500 }))
+      .mockReturnValueOnce(queryResult(null));
+
+    await expect(
+      transferMoney(userId, beneficiaryInput, 'beneficiary-key-005', metadata),
+    ).rejects.toMatchObject({ statusCode: 409 });
+
+    expect(mocks.beneficiaryUpdateOne).not.toHaveBeenCalled();
+  });
+
+  it('includes beneficiary identity in the idempotency fingerprint', async () => {
+    arrangeAccounts();
+    mocks.beneficiaryFindOne.mockReturnValue(
+      queryResult({
+        _id: beneficiaryId,
+        beneficiaryAccount: receiverId,
+        status: 'active',
+      }),
+    );
+    await transferMoney(userId, beneficiaryInput, 'beneficiary-key-006', metadata);
+    const stored = {
+      _id: 'transaction-0',
+      ...mocks.transactionCreate.mock.calls[0][0][0],
+      status: 'completed',
+    };
+    mocks.transactionFindOne.mockImplementation(() => queryResult(stored));
+
+    await expect(
+      transferMoney(
+        userId,
+        { ...beneficiaryInput, beneficiaryId: '507f1f77bcf86cd799439088' },
+        'beneficiary-key-006',
+        metadata,
+      ),
+    ).rejects.toMatchObject({ statusCode: 409 });
+
+    expect(mocks.connectionTransaction).toHaveBeenCalledTimes(1);
+    expect(mocks.beneficiaryUpdateOne).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not update lastUsedAt twice for an idempotent beneficiary retry', async () => {
+    arrangeAccounts();
+    mocks.beneficiaryFindOne.mockReturnValue(
+      queryResult({
+        _id: beneficiaryId,
+        beneficiaryAccount: receiverId,
+        status: 'active',
+      }),
+    );
+    await transferMoney(userId, beneficiaryInput, 'beneficiary-key-007', metadata);
+    const stored = {
+      _id: 'transaction-0',
+      ...mocks.transactionCreate.mock.calls[0][0][0],
+      status: 'completed',
+    };
+    mocks.transactionFindOne.mockImplementation(() => queryResult(stored));
+
+    const duplicate = await transferMoney(
+      userId,
+      beneficiaryInput,
+      'beneficiary-key-007',
+      metadata,
+    );
+
+    expect(duplicate.duplicate).toBe(true);
+    expect(mocks.beneficiaryUpdateOne).toHaveBeenCalledTimes(1);
+    expect(mocks.accountFindOneAndUpdate).toHaveBeenCalledTimes(2);
+  });
+
   it('requires an administrator and reason before starting a reversal', async () => {
     await expect(
       createReversalFoundation('transaction-1', { role: 'employee' }, 'Bank correction', metadata),
     ).rejects.toMatchObject({ statusCode: 403 });
     await expect(
-      createReversalFoundation(
-        'transaction-1',
-        { role: 'admin', _id: 'admin-id' },
-        '',
-        metadata,
-      ),
+      createReversalFoundation('transaction-1', { role: 'admin', _id: 'admin-id' }, '', metadata),
     ).rejects.toMatchObject({ statusCode: 422 });
     expect(mocks.connectionTransaction).not.toHaveBeenCalled();
   });

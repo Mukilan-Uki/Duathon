@@ -1,6 +1,10 @@
 const styles = {
   pending: 'bg-amber-100 text-amber-800',
   active: 'bg-emerald-100 text-emerald-800',
+  available: 'bg-emerald-100 text-emerald-800',
+  inactive: 'bg-slate-200 text-slate-700',
+  unavailable: 'bg-amber-100 text-amber-800',
+  blocked: 'bg-red-100 text-red-800',
   suspended: 'bg-red-100 text-red-800',
   closed: 'bg-slate-200 text-slate-700',
   completed: 'bg-emerald-100 text-emerald-800',

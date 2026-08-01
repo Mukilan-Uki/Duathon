@@ -2,6 +2,7 @@ import crypto from 'node:crypto';
 import mongoose from 'mongoose';
 import { env } from '../config/env.js';
 import Account from '../models/Account.js';
+import Beneficiary from '../models/Beneficiary.js';
 import Transaction from '../models/Transaction.js';
 import { AppError } from '../utils/AppError.js';
 import { generateTransferReference } from '../utils/transactionReference.js';
@@ -30,6 +31,7 @@ function requestFingerprint(userId, input) {
         userId: userId.toString(),
         senderAccountId: input.senderAccountId,
         receiverAccountNumber: input.receiverAccountNumber,
+        ...(input.beneficiaryId ? { beneficiaryId: input.beneficiaryId } : {}),
         amount: input.amount,
         description: input.description || '',
       }),
@@ -67,7 +69,9 @@ export function presentTransaction(transaction, viewer) {
     initiatedAt: value.initiatedAt || value.createdAt,
     completedAt: value.completedAt,
     senderAccount: maskAccountNumber(value.senderAccountNumber),
-    receiverAccount: maskAccountNumber(value.receiverAccountNumber || value.counterpartyAccountNumber),
+    receiverAccount: maskAccountNumber(
+      value.receiverAccountNumber || value.counterpartyAccountNumber,
+    ),
     counterpartyAccountNumber: sent
       ? maskAccountNumber(value.receiverAccountNumber || value.counterpartyAccountNumber)
       : maskAccountNumber(value.senderAccountNumber || value.counterpartyAccountNumber),
@@ -79,9 +83,7 @@ async function findIdempotentResult(userId, idempotencyKey, fingerprint, session
   const query = Transaction.findOne({
     $or: [{ senderUser: userId }, { owner: userId, direction: 'sent' }],
     idempotencyKey,
-  }).select(
-    '+idempotencyKey +requestHash +senderAccountNumber +receiverAccountNumber',
-  );
+  }).select('+idempotencyKey +requestHash +senderAccountNumber +receiverAccountNumber');
   if (session) query.session(session);
   const existing = await query;
   if (!existing) return null;
@@ -114,10 +116,7 @@ async function enforceDailyLimits(userId, amount, limits, session) {
   const pipeline = [
     {
       $match: {
-        $or: [
-          { senderUser: userId },
-          { owner: userId, direction: 'sent' },
-        ],
+        $or: [{ senderUser: userId }, { owner: userId, direction: 'sent' }],
         status: { $in: ACTIVE_TRANSFER_STATUSES },
         createdAt: { $gte: startOfUtcDay() },
       },
@@ -187,7 +186,23 @@ export async function transferMoney(userId, input, idempotencyKey, metadata) {
         if (!sender) throw new AppError('Sender account not found', 404);
         if (sender.status !== 'active') throw new AppError('Sender account is not active', 409);
 
-        const receiver = await Account.findOne({ accountNumber: normalized.receiverAccountNumber })
+        let beneficiary = null;
+        if (normalized.beneficiaryId) {
+          beneficiary = await Beneficiary.findOne({
+            _id: normalized.beneficiaryId,
+            owner: userId,
+          }).session(session);
+          if (!beneficiary) throw new AppError('Beneficiary not found', 404);
+          // Beneficiaries saved before Phase 5 have no lifecycle field and are
+          // treated as active everywhere else in the beneficiary boundary.
+          if (beneficiary.status && beneficiary.status !== 'active') {
+            throw new AppError('This beneficiary is unavailable', 409);
+          }
+        }
+        const receiverQuery = normalized.beneficiaryId
+          ? { _id: beneficiary.beneficiaryAccount }
+          : { accountNumber: normalized.receiverAccountNumber };
+        const receiver = await Account.findOne(receiverQuery)
           .select('+accountNumber')
           .session(session);
         if (!receiver) throw new AppError('Receiver account not found', 404);
@@ -200,7 +215,7 @@ export async function transferMoney(userId, input, idempotencyKey, metadata) {
         }
 
         const reference = generateTransferReference();
-        failureContext = { sender, receiver, reference };
+        failureContext = { sender, receiver, reference, beneficiary };
         const [transaction] = await Transaction.create(
           [
             {
@@ -212,6 +227,7 @@ export async function transferMoney(userId, input, idempotencyKey, metadata) {
               receiverUser: receiver.owner,
               senderAccount: sender._id,
               receiverAccount: receiver._id,
+              beneficiary: beneficiary?._id || null,
               senderAccountNumber: sender.accountNumber,
               receiverAccountNumber: receiver.accountNumber,
               reference,
@@ -244,7 +260,11 @@ export async function transferMoney(userId, input, idempotencyKey, metadata) {
           targetType: 'Transaction',
           targetId: transaction._id,
           before: null,
-          after: { senderAccount: sender._id, receiverAccount: receiver._id, amount: normalized.amount },
+          after: {
+            senderAccount: sender._id,
+            receiverAccount: receiver._id,
+            amount: normalized.amount,
+          },
           metadata,
           session,
         });
@@ -289,8 +309,14 @@ export async function transferMoney(userId, input, idempotencyKey, metadata) {
           action: 'TRANSFER_COMPLETED',
           targetType: 'Transaction',
           targetId: transaction._id,
-          before: { senderBalanceMinor: sender.availableBalanceMinor, receiverBalanceMinor: receiver.availableBalanceMinor },
-          after: { senderBalanceMinor: debited.availableBalanceMinor, receiverBalanceMinor: credited.availableBalanceMinor },
+          before: {
+            senderBalanceMinor: sender.availableBalanceMinor,
+            receiverBalanceMinor: receiver.availableBalanceMinor,
+          },
+          after: {
+            senderBalanceMinor: debited.availableBalanceMinor,
+            receiverBalanceMinor: credited.availableBalanceMinor,
+          },
           metadata,
           session,
         });
@@ -318,6 +344,20 @@ export async function transferMoney(userId, input, idempotencyKey, metadata) {
             session,
           ),
         ]);
+        if (beneficiary) {
+          const lastUsedUpdate = await Beneficiary.updateOne(
+            {
+              _id: beneficiary._id,
+              owner: userId,
+              $or: [{ status: 'active' }, { status: { $exists: false } }],
+            },
+            { $set: { lastUsedAt: new Date() } },
+            { session },
+          );
+          if (lastUsedUpdate.matchedCount !== 1) {
+            throw new AppError('This beneficiary is no longer available', 409);
+          }
+        }
         return {
           transaction: presentTransaction(transaction, { _id: userId }),
           duplicate: false,
@@ -346,6 +386,7 @@ export async function transferMoney(userId, input, idempotencyKey, metadata) {
         receiverUser: failureContext.receiver.owner,
         senderAccount: failureContext.sender._id,
         receiverAccount: failureContext.receiver._id,
+        beneficiary: failureContext.beneficiary?._id || null,
         senderAccountNumber: failureContext.sender.accountNumber,
         receiverAccountNumber: failureContext.receiver.accountNumber,
         reference: failureContext.reference,
@@ -399,7 +440,8 @@ export async function listTransactions({ owner, filters, staff = false }) {
         ? [{ senderUser: owner }, { owner, direction: 'sent' }]
         : [{ receiverUser: owner }, { owner, direction: 'received' }];
   }
-  if (filters.type) query.$and = [{ $or: [{ transactionType: filters.type }, { type: filters.type }] }];
+  if (filters.type)
+    query.$and = [{ $or: [{ transactionType: filters.type }, { type: filters.type }] }];
   if (filters.status) query.status = filters.status;
   if (filters.dateFrom || filters.dateTo) {
     query.createdAt = {};
@@ -409,7 +451,9 @@ export async function listTransactions({ owner, filters, staff = false }) {
   if (filters.search) {
     const pattern = new RegExp(escapeRegex(filters.search), 'i');
     query.$and ||= [];
-    query.$and.push({ $or: [{ reference: pattern }, { transferReference: pattern }, { description: pattern }] });
+    query.$and.push({
+      $or: [{ reference: pattern }, { transferReference: pattern }, { description: pattern }],
+    });
   }
   const sort = filters.sort === 'oldest' ? 1 : -1;
   const skip = (filters.page - 1) * filters.limit;
@@ -422,8 +466,15 @@ export async function listTransactions({ owner, filters, staff = false }) {
     Transaction.countDocuments(query),
   ]);
   return {
-    transactions: records.map((record) => presentTransaction(record, staff ? null : { _id: owner })),
-    pagination: { page: filters.page, limit: filters.limit, total, pages: Math.max(1, Math.ceil(total / filters.limit)) },
+    transactions: records.map((record) =>
+      presentTransaction(record, staff ? null : { _id: owner }),
+    ),
+    pagination: {
+      page: filters.page,
+      limit: filters.limit,
+      total,
+      pages: Math.max(1, Math.ceil(total / filters.limit)),
+    },
   };
 }
 
@@ -434,11 +485,7 @@ export async function getTransactionForUser(transactionId, user) {
   if (!transaction) throw new AppError('Transaction not found', 404);
   if (user.role === 'customer') {
     const userId = user._id.toString();
-    const participants = [
-      transaction.senderUser,
-      transaction.receiverUser,
-      transaction.owner,
-    ]
+    const participants = [transaction.senderUser, transaction.receiverUser, transaction.owner]
       .filter(Boolean)
       .map((value) => value.toString());
     if (!participants.includes(userId)) {

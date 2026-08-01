@@ -13,6 +13,7 @@ const transactionSchema = new mongoose.Schema(
     receiverUser: { type: mongoose.Schema.Types.ObjectId, ref: 'User', index: true },
     senderAccount: { type: mongoose.Schema.Types.ObjectId, ref: 'Account', index: true },
     receiverAccount: { type: mongoose.Schema.Types.ObjectId, ref: 'Account', index: true },
+    beneficiary: { type: mongoose.Schema.Types.ObjectId, ref: 'Beneficiary', default: null },
     senderAccountNumber: { type: String, select: false },
     receiverAccountNumber: { type: String, select: false },
     account: {

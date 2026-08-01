@@ -18,6 +18,7 @@ const NotificationsPage = load(() => import('../pages/customer/NotificationsPage
 const AccountsPage = load(() => import('../pages/customer/AccountsPage'));
 const AccountDetailsPage = load(() => import('../pages/customer/AccountDetailsPage'));
 const BeneficiariesPage = load(() => import('../pages/customer/BeneficiariesPage'));
+const BeneficiaryDetailsPage = load(() => import('../pages/customer/BeneficiaryDetailsPage'));
 const LoansPage = load(() => import('../pages/customer/LoansPage'));
 const TransferPage = load(() => import('../pages/customer/TransferPage'));
 const TransferResultPage = load(() => import('../pages/customer/TransferResultPage'));
@@ -56,35 +57,36 @@ export default function AppRoutes() {
           </Route>
           <Route element={<ProtectedRoute />}>
             <Route element={<RoleProtectedRoute roles={['customer']} />}>
-            <Route path="dashboard" element={<CustomerDashboardPage />} />
-            <Route path="notifications" element={<NotificationsPage />} />
-            <Route path="accounts" element={<AccountsPage />} />
-            <Route path="accounts/:accountId" element={<AccountDetailsPage />} />
-            <Route path="beneficiaries" element={<BeneficiariesPage />} />
-            <Route path="loans" element={<LoansPage />} />
-            <Route path="transfer" element={<TransferPage />} />
-            <Route path="transfer/result" element={<TransferResultPage />} />
-            <Route path="transactions" element={<TransactionHistoryPage />} />
-            <Route path="transactions/:transactionId" element={<TransactionDetailsPage />} />
-            <Route path="transactions/:transactionId/receipt" element={<ReceiptPage />} />
+              <Route path="dashboard" element={<CustomerDashboardPage />} />
+              <Route path="notifications" element={<NotificationsPage />} />
+              <Route path="accounts" element={<AccountsPage />} />
+              <Route path="accounts/:accountId" element={<AccountDetailsPage />} />
+              <Route path="beneficiaries" element={<BeneficiariesPage />} />
+              <Route path="beneficiaries/:beneficiaryId" element={<BeneficiaryDetailsPage />} />
+              <Route path="loans" element={<LoansPage />} />
+              <Route path="transfer" element={<TransferPage />} />
+              <Route path="transfer/result" element={<TransferResultPage />} />
+              <Route path="transactions" element={<TransactionHistoryPage />} />
+              <Route path="transactions/:transactionId" element={<TransactionDetailsPage />} />
+              <Route path="transactions/:transactionId/receipt" element={<ReceiptPage />} />
             </Route>
           </Route>
           <Route element={<ProtectedRoute />}>
             <Route element={<RoleProtectedRoute roles={['employee']} />}>
-            <Route path="employee/dashboard" element={<EmployeeDashboardPage />} />
+              <Route path="employee/dashboard" element={<EmployeeDashboardPage />} />
             </Route>
           </Route>
           <Route element={<ProtectedRoute />}>
             <Route element={<RoleProtectedRoute roles={['admin']} />}>
-            <Route path="admin/dashboard" element={<AdminDashboardPage />} />
-            <Route path="admin/operations" element={<AdminOperationsPage />} />
+              <Route path="admin/dashboard" element={<AdminDashboardPage />} />
+              <Route path="admin/operations" element={<AdminOperationsPage />} />
             </Route>
           </Route>
           <Route element={<ProtectedRoute />}>
             <Route element={<RoleProtectedRoute roles={['employee', 'admin']} />}>
-            <Route path="account-reviews" element={<AccountReviewPage />} />
-            <Route path="loan-reviews" element={<LoanReviewPage />} />
-            <Route path="transaction-monitoring" element={<TransactionMonitoringPage />} />
+              <Route path="account-reviews" element={<AccountReviewPage />} />
+              <Route path="loan-reviews" element={<LoanReviewPage />} />
+              <Route path="transaction-monitoring" element={<TransactionMonitoringPage />} />
             </Route>
           </Route>
           <Route path="*" element={<NotFoundPage />} />

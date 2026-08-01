@@ -10,15 +10,29 @@ export const transferSchema = z.object({
   body: z
     .object({
       senderAccountId: z.string().regex(/^[a-f\d]{24}$/i, 'Invalid sender account'),
-      receiverAccountNumber: z.string().regex(/^\d{12}$/, 'Enter a valid 12-digit account number'),
+      receiverAccountNumber: z
+        .string()
+        .regex(/^\d{12}$/, 'Enter a valid 12-digit account number')
+        .optional(),
+      beneficiaryId: z
+        .string()
+        .regex(/^[a-f\d]{24}$/i, 'Invalid beneficiary identifier')
+        .optional(),
       amount: z.number().int().safe().positive().optional(),
       amountMinor: z.number().int().safe().positive().optional(),
       description: z.string().trim().max(200).optional().default(''),
-      idempotencyKey: z.string().regex(/^[A-Za-z0-9_-]{8,128}$/).optional(),
+      idempotencyKey: z
+        .string()
+        .regex(/^[A-Za-z0-9_-]{8,128}$/)
+        .optional(),
     })
     .refine((value) => value.amount != null || value.amountMinor != null, {
       message: 'An integer minor-unit amount is required',
       path: ['amount'],
+    })
+    .refine((value) => Boolean(value.beneficiaryId) !== Boolean(value.receiverAccountNumber), {
+      message: 'Provide either a beneficiary or a receiver account number',
+      path: ['receiverAccountNumber'],
     })
     .transform((value) => ({ ...value, amount: value.amount ?? value.amountMinor })),
 });
