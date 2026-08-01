@@ -16,6 +16,8 @@ const result = z
     VERIFICATION_RESEND_LIMIT: z.coerce.number().int().positive().default(3),
     VERIFICATION_RESEND_WINDOW_MINUTES: z.coerce.number().int().positive().default(60),
     PASSWORD_RESET_EXPIRES_MINUTES: z.coerce.number().int().positive().max(60).default(15),
+    FAMILY_INVITATION_EXPIRES_DAYS: z.coerce.number().int().positive().max(30).default(7),
+    ADULT_MIN_AGE: z.coerce.number().int().min(18).max(25).default(18),
     SMTP_HOST: z.string().optional().default(''),
     SMTP_PORT: z.coerce.number().int().positive().default(587),
     SMTP_SECURE: z

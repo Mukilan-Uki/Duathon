@@ -34,6 +34,7 @@ export async function registerUser(input) {
     lastName: input.lastName,
     email,
     phoneNumber: input.phoneNumber,
+    dateOfBirth: input.dateOfBirth,
     password: input.password,
   });
   await issueOtp(user, 'email_verification');

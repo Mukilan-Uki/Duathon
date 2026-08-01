@@ -26,6 +26,7 @@ const people = [
     lastName: 'Customer',
     role: 'customer',
     phoneNumber: '+94770000001',
+    dateOfBirth: new Date('1990-01-15'),
   },
   {
     key: 'customer2',
@@ -34,6 +35,7 @@ const people = [
     lastName: 'Customer',
     role: 'customer',
     phoneNumber: '+94770000004',
+    dateOfBirth: new Date('1992-06-20'),
   },
   {
     key: 'employee',
@@ -68,6 +70,7 @@ async function seed() {
           lastName: person.lastName,
           role: person.role,
           phoneNumber: person.phoneNumber,
+          dateOfBirth: person.dateOfBirth,
           password: passwordHash,
           accountStatus: 'active',
           isEmailVerified: true,

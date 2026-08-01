@@ -27,6 +27,10 @@ export const registerSchema = z.object({
       lastName: z.string().trim().min(2).max(60),
       email,
       phoneNumber,
+      dateOfBirth: z.coerce
+        .date()
+        .max(new Date(), 'Date of birth cannot be in the future')
+        .optional(),
       password,
       confirmPassword: z.string(),
     })
