@@ -33,7 +33,12 @@ router.get(
   validate(transactionListSchema),
   asyncHandler(history),
 );
-router.get('/history', authorize('customer'), validate(transactionListSchema), asyncHandler(history));
+router.get(
+  '/history',
+  authorize('customer'),
+  validate(transactionListSchema),
+  asyncHandler(history),
+);
 router.get(
   '/monitor',
   authorize('employee', 'admin'),

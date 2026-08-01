@@ -23,7 +23,7 @@ Create the service from the repository Blueprint using `render.yaml`, or configu
 
 - Build: `npm ci`
 - Start: `npm start --workspace server`
-- Health check: `/api/health`
+- Health check: `/api/health/ready` (returns 503 until MongoDB is connected)
 - Runtime: Node.js 20+
 
 Required variables:
@@ -35,6 +35,9 @@ Required variables:
 | `CLIENT_URL`                            | Exact Netlify origin, without a trailing slash        |
 | `JWT_ACCESS_SECRET`                     | Unique cryptographically random value, 32+ characters |
 | `JWT_REFRESH_SECRET`                    | Different random value, 32+ characters                |
+| `DEVICE_TOKEN_SECRET`                   | Third distinct cryptographically random secret        |
+| `DEVICE_COOKIE_NAME`                    | `duothan_device`                                      |
+| `DEVICE_TRUST_DAYS`                     | Reviewed device trust lifetime, default 90            |
 | `SMTP_HOST`, `SMTP_PORT`, `SMTP_SECURE` | SMTP provider configuration                           |
 | `SMTP_USER`, `SMTP_PASSWORD`            | Provider credentials                                  |
 | `EMAIL_FROM`                            | Verified sender identity                              |
@@ -59,7 +62,17 @@ The production refresh cookie is HTTP-only, Secure, and `SameSite=None` because 
 
 ## 5. Release verification
 
-1. Confirm `GET /api/health` returns HTTP 200 and `database: connected`.
+Run the local configuration and tracked-secret check before deployment:
+
+```bash
+npm run preflight:deploy
+npm ci
+npm run lint
+npm test
+npm run build
+```
+
+1. Confirm `GET /api/health` returns liveness and `GET /api/health/ready` returns HTTP 200 with `database: connected`.
 2. Register and verify a new test customer through the configured email provider.
 3. Confirm login, refresh, logout, and password reset.
 4. Test one account review, transfer, receipt, loan review, and repayment using test funds.
@@ -67,6 +80,10 @@ The production refresh cookie is HTTP-only, Secure, and `SameSite=None` because 
 6. Inspect browser cookies and confirm the refresh token is not readable by JavaScript.
 7. Verify CSP, `X-Frame-Options`, and `X-Content-Type-Options` response headers.
 8. Check Render, Atlas, email, and Netlify logs without recording secrets or customer data.
+9. Refresh deep frontend routes such as `/security` and `/family/goals` and confirm the SPA fallback avoids a 404.
+10. Confirm Family Banking, Junior Banking and Trusted Devices against production-like test identities.
+
+Record the verified frontend/API URLs and timestamp in the submission checklist. Local preparation does not prove that external services are deployed.
 
 ## Rollback
 

@@ -12,3 +12,14 @@ export function getHealth(_req, res) {
     },
   });
 }
+
+export function getReadiness(_req, res) {
+  const database = getDatabaseStatus();
+  const ready = database === 'connected';
+  return res.status(ready ? 200 : 503).json({
+    success: ready,
+    message: ready ? 'Duothan Banking API is ready' : 'Duothan Banking API is not ready',
+    data: { status: ready ? 'ready' : 'not_ready', database, timestamp: new Date().toISOString() },
+    errors: [],
+  });
+}

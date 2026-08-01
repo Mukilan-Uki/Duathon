@@ -1,52 +1,69 @@
-# Final submission checklist
+# Final Submission Checklist
 
-## Repository
+Release: **FortiBank Phase 2 – Rebuild** (`v1.0.0-phase-2`)
 
-- [ ] Repository visibility and team access are correct.
-- [ ] Default branch is protected and the final changes are committed.
-- [ ] Working tree is clean.
-- [ ] `.env`, credentials, tokens, OTP values, and real customer data are absent from Git history.
-- [ ] README setup and command examples were tested on a clean clone.
-- [ ] Commit history uses meaningful messages.
+Use `[x]` only after checking the final public repository and deployed environment. Items marked complete below were verifiable from the local source tree; deployment-specific items intentionally remain open.
 
-## Functional demonstration
+## Repository and source package
 
-- [ ] Customer registration, verification, login, refresh, logout, and reset work.
-- [ ] Account application and employee review work.
-- [ ] Transfer success, insufficient funds, duplicate submission, and receipt flows work.
-- [ ] Beneficiary creation and removal work.
-- [ ] Loan application, decision, disbursement, and repayment work.
-- [ ] All three dashboards load with role-appropriate information.
-- [ ] Notifications, monitoring, audit logs, and settings work.
-- [ ] Unauthorized users cannot access another role's pages or APIs.
+- [ ] Public GitHub repository URL added here: `ADD_URL`
+- [ ] Final Stage 10 changes committed and pushed to the default branch
+- [ ] Repository visibility confirmed from a signed-out browser
+- [ ] Annotated tag and GitHub release `v1.0.0-phase-2` published
+- [x] README, setup guide, API documentation, environment examples, and release notes included
+- [x] Development credentials and demo-data instructions documented
+- [x] Generated files, dependencies, local environments, and submission artifacts ignored
+- [ ] `npm run package:submission` run from a clean final commit
+- [ ] Generated ZIP opened and checked for completeness and absence of secrets
 
-## Quality and security
+## Automated quality gate
 
-- [ ] `npm run format:check` passes.
-- [ ] `npm run lint` passes.
-- [ ] `npm test` passes.
-- [ ] `npm run build` passes.
-- [ ] Dependency audit results are reviewed and documented.
-- [ ] Mobile, tablet, desktop, keyboard-only, reduced-motion, empty, loading, and error states were reviewed.
-- [ ] MongoDB transactions and idempotency were demonstrated with a replica-set-capable database.
-- [ ] Production secrets are unique and stored only in provider secret management.
-- [ ] The exposed Atlas password identified during Phase 10 was rotated.
+- [ ] `npm run format:check` passes on the final commit
+- [ ] `npm run lint` passes on the final commit
+- [ ] `npm test` passes on the final commit
+- [ ] `npm run build` passes on the final commit
+- [ ] `npm run preflight:deploy` passes with production configuration
+- [ ] Dependency/security scan reviewed and material findings resolved or documented
 
-## Deployment
+## Functional verification
 
-- [ ] MongoDB Atlas production user, access rules, backup, and monitoring are configured.
-- [ ] Render health check reports a connected database.
-- [ ] Netlify uses the correct `VITE_API_URL`.
-- [ ] Render uses the exact Netlify origin for `CLIENT_URL`.
-- [ ] SMTP sender identity and delivery are verified.
-- [ ] Production refresh cookies are Secure and HTTP-only.
-- [ ] Logs do not contain secrets or sensitive financial payloads.
-- [ ] Last known-good deployments and rollback owners are recorded.
+- [ ] Administrator, employee, two adult customers, and junior customer can sign in
+- [ ] Password reset email, token validation, password update, and session revocation work
+- [ ] Administrator can manage employees, users, settings, audit logs, and analytics
+- [ ] Employee can approve/reject accounts and review/approve/reject loans
+- [ ] Customer balances, transfers, history filters, statements, and exports are correct
+- [ ] Loan application, document upload, status timeline, disbursement, and repayment work
+- [ ] Family creation, invite/join, member roles, announcements, goals, and notifications work
+- [ ] Junior login, limits, blocked/approval-required transfers, allowances, and goals work
+- [ ] Guardian approvals, controls, transaction visibility, and beneficiary requests work
+- [ ] Trusted, pending, revoked, expired, and unknown-device flows work
+- [ ] Authorization prevents cross-user and cross-family data access
+- [ ] Duplicate submissions and concurrent balance/approval operations remain consistent
 
-## Submission material
+## Production deployment
 
-- [ ] Public URL and API health URL are included.
-- [ ] Screenshots use demo data and cover all three roles plus mobile.
-- [ ] Architecture, API, security, quality, user, and deployment documents are linked.
-- [ ] Demo credentials are shared through an approved private channel, not committed.
-- [ ] Known limitations and the React Router advisory assessment are disclosed.
+- [ ] Frontend URL added here and reachable: `ADD_URL`
+- [ ] Backend URL added here and reachable: `ADD_URL`
+- [ ] `/api/health/live`, `/api/health/ready`, and HTTPS verified
+- [ ] Production MongoDB connectivity, indexes, backup, and recovery plan verified
+- [ ] Strong production secrets configured only in provider environment settings
+- [ ] CORS and frontend API URL match the final HTTPS domains
+- [ ] SMTP/provider email delivery and password-reset link verified end to end
+- [ ] Upload storage behavior and persistence verified on the hosting platform
+- [ ] Logs checked after smoke tests with no unresolved errors or sensitive-data exposure
+
+## UX, accessibility, and evidence
+
+- [ ] Desktop, tablet, and mobile checks completed on the deployed build
+- [ ] Keyboard navigation, focus indicators, labels, contrast, and reduced motion checked
+- [ ] Loading, empty, validation, forbidden, offline, and server-error states checked
+- [ ] Browser console and network panel are clean during core workflows
+- [ ] Screenshot matrix in `docs/screenshots/README.md` completed
+- [ ] Screenshots reviewed for secrets and real customer information
+
+## Final handoff
+
+- [ ] Repository URL, frontend URL, backend URL, release URL, and ZIP attached to submission
+- [ ] Known limitations in `docs/RELEASE_NOTES.md` reviewed and updated
+- [ ] Clean install performed from the submitted source package
+- [ ] Final evaluator walkthrough completed using development-safe demo credentials

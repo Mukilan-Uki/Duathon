@@ -11,6 +11,12 @@ const refreshTokenSchema = new mongoose.Schema(
     createdByIp: { type: String, default: '' },
     revokedByIp: { type: String, default: '' },
     userAgent: { type: String, default: '' },
+    trustedDevice: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'TrustedDevice',
+      default: null,
+      index: true,
+    },
   },
   { timestamps: true },
 );

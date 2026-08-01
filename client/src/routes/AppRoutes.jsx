@@ -31,6 +31,14 @@ const LoanReviewPage = load(() => import('../pages/employee/LoanReviewPage'));
 const TransactionMonitoringPage = load(() => import('../pages/employee/TransactionMonitoringPage'));
 const AdminDashboardPage = load(() => import('../pages/admin/AdminDashboardPage'));
 const AdminOperationsPage = load(() => import('../pages/admin/AdminOperationsPage'));
+const FamilyDashboardPage = load(() => import('../pages/family/FamilyDashboardPage'));
+const FamilyInvitationsPage = load(() => import('../pages/family/FamilyInvitationsPage'));
+const FamilyMembersPage = load(() => import('../pages/family/FamilyMembersPage'));
+const FamilyGoalsPage = load(() => import('../pages/family/FamilyGoalsPage'));
+const FamilyActivityPage = load(() => import('../pages/family/FamilyActivityPage'));
+const JuniorDashboardPage = load(() => import('../pages/junior/JuniorDashboardPage'));
+const GuardianJuniorPage = load(() => import('../pages/junior/GuardianJuniorPage'));
+const SecurityCentrePage = load(() => import('../pages/security/SecurityCentrePage'));
 
 function RouteLoading() {
   return (
@@ -55,6 +63,7 @@ export default function AppRoutes() {
           <Route element={<ProtectedRoute />}>
             <Route path="profile" element={<ProfilePage />} />
             <Route path="notifications" element={<NotificationsPage />} />
+            <Route path="security" element={<SecurityCentrePage />} />
           </Route>
           <Route element={<ProtectedRoute />}>
             <Route element={<RoleProtectedRoute roles={['customer']} />}>
@@ -64,6 +73,13 @@ export default function AppRoutes() {
               <Route path="beneficiaries" element={<BeneficiariesPage />} />
               <Route path="beneficiaries/:beneficiaryId" element={<BeneficiaryDetailsPage />} />
               <Route path="loans" element={<LoansPage />} />
+              <Route path="family" element={<FamilyDashboardPage />} />
+              <Route path="family/invitations" element={<FamilyInvitationsPage />} />
+              <Route path="family/members" element={<FamilyMembersPage />} />
+              <Route path="family/goals" element={<FamilyGoalsPage />} />
+              <Route path="family/activity" element={<FamilyActivityPage />} />
+              <Route path="junior" element={<JuniorDashboardPage />} />
+              <Route path="guardian/junior" element={<GuardianJuniorPage />} />
               <Route path="transfer" element={<TransferPage />} />
               <Route path="transfer/result" element={<TransferResultPage />} />
               <Route path="transactions" element={<TransactionHistoryPage />} />

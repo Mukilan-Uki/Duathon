@@ -12,10 +12,11 @@ import { sendPasswordResetEmail } from './emailService.js';
 import { env } from '../config/env.js';
 import { recordSecuritySignal } from './securityMonitoringService.js';
 import { parseUserAgent } from '../utils/userAgent.js';
+import { observeLoginDevice } from './trustedDeviceService.js';
 
 const LOCK_MINUTES = 15;
 
-async function recordLogin(user, email, successful, reason, metadata) {
+async function recordLogin(user, email, successful, reason, metadata, observation = null) {
   const client = parseUserAgent(metadata.userAgent);
   await LoginHistory.create({
     user: user?._id || null,
@@ -25,6 +26,10 @@ async function recordLogin(user, email, successful, reason, metadata) {
     ipAddress: metadata.ip,
     userAgent: metadata.userAgent,
     ...client,
+    trustedDevice: observation?.device?._id || null,
+    deviceStatus: observation?.device?.status || 'unknown',
+    riskLevel: observation?.riskLevel || (successful ? 'low' : 'medium'),
+    riskReasons: observation?.riskReasons || (successful ? [] : ['failed_attempts']),
   });
 }
 
@@ -38,6 +43,7 @@ export async function registerUser(input) {
     lastName: input.lastName,
     email,
     phoneNumber: input.phoneNumber,
+    dateOfBirth: input.dateOfBirth,
     password: input.password,
   });
   await issueOtp(user, 'email_verification');
@@ -156,8 +162,13 @@ export async function loginUser(emailInput, password, metadata) {
   user.lockUntil = null;
   user.lastLoginAt = new Date();
   await user.save();
-  await recordLogin(user, email, true, 'success', metadata);
-  return { user, ...(await createSession(user, metadata)) };
+  const observation = await observeLoginDevice(user, metadata.deviceToken, metadata);
+  await recordLogin(user, email, true, 'success', metadata, observation);
+  return {
+    user,
+    deviceToken: observation.rawToken,
+    ...(await createSession(user, { ...metadata, trustedDevice: observation.device._id })),
+  };
 }
 
 export async function requestPasswordReset(email, metadata = {}) {

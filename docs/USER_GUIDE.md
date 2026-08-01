@@ -47,3 +47,23 @@ Open **Beneficiaries**, enter a nickname and another customer’s active 12-digi
 Customers open **Loans**, select an active disbursement account, type, requested amount, repayment period, and purpose. The application remains pending until staff review. Approved funds are credited to the selected account and repayment details appear immediately.
 
 Employees and administrators open **Loan reviews**, add a review note, and approve/disburse or reject. Previous decisions remain visible. Customers make payments from an active account through the confirmation dialog; successful payments update the outstanding balance and transaction history.
+
+## Family administrator and members
+
+Open **Family Banking** to create an adult family, invite existing verified adults, publish announcements and create shared goals. Family administrators manage roles and individual permissions from **Members**. Membership never reveals another adult's account balance. Invited adults accept or reject from **Invitations**; contributions debit only the contributor's selected account.
+
+## Junior user
+
+Open **Junior Banking** to see the restricted available balance, allowance, limits, recent approval requests, savings goals and education tips. Junior accounts cannot bypass supervision through the normal transfer endpoint. Requests above the configured threshold wait for a guardian; rejected, expired and completed states remain visible.
+
+## Guardian
+
+Open **Guardian controls**, select an authorized junior and configure integer spending limits, transfer availability and allowances. Review pending transfer requests carefully before approval. The backend rechecks account status, balance, expiry and limits when approved. Guardian permissions do not expose authentication secrets or unrelated accounts.
+
+## Trusted devices
+
+Every authenticated role can open **Security Centre**. Review current and previous devices, rename recognizable devices, trust the current device after confirming the password, remove trust, terminate one device session, or sign out all other sessions. Investigate high-risk or unfamiliar login-history entries and change the password if compromise is suspected.
+
+## Employee and administrator operations
+
+Employees approve/reject accounts, review loans and monitor activity within their authorized tools. Administrators additionally manage allow-listed settings and review immutable audit records. Junior-to-adult conversion requires staff age and identity verification and preserves account and transaction history.

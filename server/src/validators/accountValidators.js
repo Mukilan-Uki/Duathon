@@ -5,7 +5,11 @@ const objectId = z.string().regex(/^[a-f\d]{24}$/i, 'Invalid account identifier'
 export const createAccountSchema = z.object({
   body: z.object({
     accountType: z.enum(['savings', 'current']),
-    branchCode: z.string().trim().toUpperCase().regex(/^[A-Z0-9]{3,10}$/),
+    branchCode: z
+      .string()
+      .trim()
+      .toUpperCase()
+      .regex(/^[A-Z0-9]{3,10}$/),
   }),
 });
 

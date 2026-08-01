@@ -14,4 +14,9 @@ describe('GET /api/health', () => {
     const response = await request(app).get('/api/missing').expect(404);
     expect(response.body).toMatchObject({ success: false, errors: [] });
   });
+
+  it('reports not ready when the test database is not connected', async () => {
+    const response = await request(app).get('/api/health/ready').expect(503);
+    expect(response.body).toMatchObject({ success: false, data: { status: 'not_ready' } });
+  });
 });

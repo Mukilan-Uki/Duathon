@@ -46,6 +46,7 @@ const userSchema = new mongoose.Schema(
       default: 'pending',
       index: true,
     },
+    dateOfBirth: { type: Date, default: null },
     isEmailVerified: { type: Boolean, default: false },
     // Temporary compatibility paths for pre-Phase-2 records.
     status: { type: String, enum: ['pending', 'active', 'suspended'] },

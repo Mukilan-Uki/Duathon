@@ -5,9 +5,13 @@ const data = (response) => response.data;
 export const transactionService = {
   transfer: (payload, idempotencyKey) =>
     httpClient
-      .post('/transfers', { ...payload, idempotencyKey }, {
-        headers: { 'Idempotency-Key': idempotencyKey },
-      })
+      .post(
+        '/transfers',
+        { ...payload, idempotencyKey },
+        {
+          headers: { 'Idempotency-Key': idempotencyKey },
+        },
+      )
       .then(data),
   validateRecipient: (accountNumber) =>
     httpClient.post('/transfers/validate-recipient', { accountNumber }).then(data),

@@ -155,7 +155,7 @@ export async function validateRecipient(accountNumber) {
   };
 }
 
-export async function transferMoney(userId, input, idempotencyKey, metadata) {
+export async function transferMoney(userId, input, idempotencyKey, metadata, options = {}) {
   const normalized = { ...input, amount: input.amount ?? input.amountMinor };
   const limits = await getTransferLimits();
   if (normalized.amount < limits.minimum) {
@@ -187,6 +187,9 @@ export async function transferMoney(userId, input, idempotencyKey, metadata) {
           .session(session);
         if (!sender) throw new AppError('Sender account not found', 404);
         if (sender.status !== 'active') throw new AppError('Sender account is not active', 409);
+        if (sender.isJuniorRestricted && !options.allowJunior) {
+          throw new AppError('Junior accounts must use the supervised transfer workflow', 403);
+        }
 
         let beneficiary = null;
         if (normalized.beneficiaryId) {

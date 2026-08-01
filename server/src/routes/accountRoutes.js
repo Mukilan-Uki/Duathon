@@ -34,7 +34,11 @@ const applicationLimiter = rateLimit({
   limit: 5,
   standardHeaders: 'draft-7',
   legacyHeaders: false,
-  message: { success: false, message: 'Too many account applications. Try again later', errors: [] },
+  message: {
+    success: false,
+    message: 'Too many account applications. Try again later',
+    errors: [],
+  },
 });
 router.use(authenticate);
 
@@ -47,15 +51,51 @@ router.post(
 );
 router.get('/my-accounts', authorize('customer'), asyncHandler(getMyAccounts));
 router.get('/pending', authorize('employee', 'admin'), asyncHandler(getPendingAccounts));
-router.get('/search', authorize('employee', 'admin'), validate(accountSearchSchema), asyncHandler(search));
-router.patch('/:accountId/approve', authorize('employee', 'admin'), validate(accountIdSchema), asyncHandler(approve));
-router.patch('/:accountId/reject', authorize('employee', 'admin'), validate(accountReasonSchema), asyncHandler(reject));
-router.patch('/:accountId/suspend', authorize('employee', 'admin'), validate(accountReasonSchema), asyncHandler(suspend));
-router.patch('/:accountId/reactivate', authorize('employee', 'admin'), validate(accountActionSchema), asyncHandler(reactivate));
-router.patch('/:accountId/close', authorize('employee', 'admin'), validate(accountReasonSchema), asyncHandler(close));
+router.get(
+  '/search',
+  authorize('employee', 'admin'),
+  validate(accountSearchSchema),
+  asyncHandler(search),
+);
+router.patch(
+  '/:accountId/approve',
+  authorize('employee', 'admin'),
+  validate(accountIdSchema),
+  asyncHandler(approve),
+);
+router.patch(
+  '/:accountId/reject',
+  authorize('employee', 'admin'),
+  validate(accountReasonSchema),
+  asyncHandler(reject),
+);
+router.patch(
+  '/:accountId/suspend',
+  authorize('employee', 'admin'),
+  validate(accountReasonSchema),
+  asyncHandler(suspend),
+);
+router.patch(
+  '/:accountId/reactivate',
+  authorize('employee', 'admin'),
+  validate(accountActionSchema),
+  asyncHandler(reactivate),
+);
+router.patch(
+  '/:accountId/close',
+  authorize('employee', 'admin'),
+  validate(accountReasonSchema),
+  asyncHandler(close),
+);
 
 // Backward-compatible aliases for existing clients; new code uses the Phase 3 routes above.
-router.post('/', applicationLimiter, authorize('customer'), validate(createAccountSchema), asyncHandler(createAccountApplication));
+router.post(
+  '/',
+  applicationLimiter,
+  authorize('customer'),
+  validate(createAccountSchema),
+  asyncHandler(createAccountApplication),
+);
 router.get('/me', authorize('customer'), asyncHandler(getMyAccounts));
 router.patch(
   '/:accountId/review',

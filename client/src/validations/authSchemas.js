@@ -22,6 +22,12 @@ export const registerSchema = z
       .string()
       .trim()
       .regex(/^\+?[1-9]\d{7,14}$/, 'Enter a valid international phone number'),
+    dateOfBirth: z
+      .string()
+      .min(1, 'Date of birth is required')
+      .refine((value) => !Number.isNaN(Date.parse(value)) && new Date(value) < new Date(), {
+        message: 'Enter a valid date of birth',
+      }),
     password: passwordSchema,
     confirmPassword: z.string(),
   })

@@ -15,7 +15,9 @@ export async function transfer(req, res) {
   const result = await transferMoney(req.user._id, req.body, req.idempotencyKey, metadata(req));
   return successResponse(res, {
     statusCode: result.duplicate ? 200 : 201,
-    message: result.duplicate ? 'Transfer request already processed' : 'Transfer completed successfully',
+    message: result.duplicate
+      ? 'Transfer request already processed'
+      : 'Transfer completed successfully',
     data: {
       transaction: result.transaction,
       duplicate: result.duplicate,

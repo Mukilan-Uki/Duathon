@@ -74,6 +74,13 @@ export default function RegisterPage() {
           error={errors.phoneNumber?.message}
         />
         <FormField
+          label="Date of birth"
+          type="date"
+          autoComplete="bday"
+          {...register('dateOfBirth')}
+          error={errors.dateOfBirth?.message}
+        />
+        <FormField
           label="Password"
           type="password"
           autoComplete="new-password"

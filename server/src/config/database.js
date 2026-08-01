@@ -6,7 +6,12 @@ export async function connectDatabase() {
     console.warn('MONGODB_URI is not configured; API is running without a database connection.');
     return false;
   }
-  await mongoose.connect(env.MONGODB_URI, { serverSelectionTimeoutMS: 10000 });
+  await mongoose.connect(env.MONGODB_URI, {
+    serverSelectionTimeoutMS: 10000,
+    maxPoolSize: env.NODE_ENV === 'production' ? 20 : 10,
+    minPoolSize: env.NODE_ENV === 'production' ? 2 : 0,
+    autoIndex: env.NODE_ENV !== 'production',
+  });
   console.info('MongoDB connected.');
   return true;
 }
