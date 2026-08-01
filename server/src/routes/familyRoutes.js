@@ -3,15 +3,19 @@ import rateLimit from 'express-rate-limit';
 import {
   accept,
   addGoal,
+  announce,
+  announcements,
   cancelInvite,
   changePermissions,
   changeRole,
   contribute,
   create,
+  dashboard,
   details,
   editGoal,
   goal,
   goals,
+  familyInvitations,
   invite,
   members,
   mine,
@@ -26,6 +30,7 @@ import { authorize } from '../middleware/authorize.js';
 import { requireIdempotencyKey } from '../middleware/requireIdempotencyKey.js';
 import { validate } from '../middleware/validate.js';
 import {
+  announcementSchema,
   contributeGoalSchema,
   createFamilySchema,
   createGoalSchema,
@@ -73,6 +78,10 @@ router.post(
   validate(invitationSchema),
   asyncHandler(invite),
 );
+router.get('/:familyId/invitations', validate(familyIdSchema), asyncHandler(familyInvitations));
+router.get('/:familyId/dashboard', validate(familyIdSchema), asyncHandler(dashboard));
+router.get('/:familyId/announcements', validate(familyIdSchema), asyncHandler(announcements));
+router.post('/:familyId/announcements', validate(announcementSchema), asyncHandler(announce));
 router.get('/:familyId', validate(familyIdSchema), asyncHandler(details));
 router.get('/:familyId/members', validate(familyIdSchema), asyncHandler(members));
 router.patch(

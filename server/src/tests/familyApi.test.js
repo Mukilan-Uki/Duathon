@@ -18,6 +18,10 @@ const mocks = vi.hoisted(() => ({
   updateGoal: vi.fn(),
   cancelGoal: vi.fn(),
   contributeToGoal: vi.fn(),
+  listFamilyInvitations: vi.fn(),
+  getFamilyDashboard: vi.fn(),
+  createAnnouncement: vi.fn(),
+  listAnnouncements: vi.fn(),
 }));
 
 vi.mock('../services/familyService.js', () => mocks);
@@ -145,5 +149,23 @@ describe('Family Banking API', () => {
       .set('Idempotency-Key', 'family-goal-key-002')
       .send({ sourceAccountId: '507f1f77bcf86cd799439024', amountMinor: 5000 })
       .expect(403);
+  });
+
+  it('returns the permission-filtered family dashboard', async () => {
+    mocks.getFamilyDashboard.mockResolvedValue({ activeMembers: 2, pendingInvitations: 1 });
+    const response = await request(app).get(`/api/families/${familyId}/dashboard`).expect(200);
+    expect(response.body.data.activeMembers).toBe(2);
+  });
+
+  it('publishes a validated family announcement through the service boundary', async () => {
+    mocks.createAnnouncement.mockResolvedValue({
+      title: 'Family update',
+      message: 'Holiday goal updated.',
+    });
+    await request(app)
+      .post(`/api/families/${familyId}/announcements`)
+      .send({ title: 'Family update', message: 'Holiday goal updated.' })
+      .expect(201);
+    expect(mocks.createAnnouncement).toHaveBeenCalledOnce();
   });
 });

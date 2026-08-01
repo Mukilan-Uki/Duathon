@@ -20,6 +20,7 @@ const accountSchema = new mongoose.Schema(
       enum: ['savings', 'current'],
       required: true,
     },
+    isJuniorRestricted: { type: Boolean, default: false, index: true },
     currency: {
       type: String,
       enum: ['LKR'],

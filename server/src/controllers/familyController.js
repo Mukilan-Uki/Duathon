@@ -2,12 +2,16 @@ import {
   cancelGoal,
   cancelInvitation,
   contributeToGoal,
+  createAnnouncement,
   createFamily,
   createGoal,
   getFamily,
+  getFamilyDashboard,
   getGoal,
   getMyFamily,
   inviteAdult,
+  listAnnouncements,
+  listFamilyInvitations,
   listGoals,
   listMyInvitations,
   removeMember,
@@ -49,6 +53,34 @@ export async function invite(req, res) {
 export async function myInvitations(req, res) {
   return successResponse(res, {
     data: { invitations: await listMyInvitations(req.user._id) },
+  });
+}
+export async function familyInvitations(req, res) {
+  return successResponse(res, {
+    data: { invitations: await listFamilyInvitations(req.params.familyId, req.user) },
+  });
+}
+export async function dashboard(req, res) {
+  return successResponse(res, {
+    data: await getFamilyDashboard(req.params.familyId, req.user._id),
+  });
+}
+export async function announcements(req, res) {
+  return successResponse(res, {
+    data: { announcements: await listAnnouncements(req.params.familyId, req.user._id) },
+  });
+}
+export async function announce(req, res) {
+  const announcement = await createAnnouncement(
+    req.params.familyId,
+    req.user,
+    req.body,
+    metadata(req),
+  );
+  return successResponse(res, {
+    statusCode: 201,
+    message: 'Family announcement published',
+    data: { announcement },
   });
 }
 export async function accept(req, res) {

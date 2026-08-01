@@ -30,6 +30,11 @@ const LoanReviewPage = load(() => import('../pages/employee/LoanReviewPage'));
 const TransactionMonitoringPage = load(() => import('../pages/employee/TransactionMonitoringPage'));
 const AdminDashboardPage = load(() => import('../pages/admin/AdminDashboardPage'));
 const AdminOperationsPage = load(() => import('../pages/admin/AdminOperationsPage'));
+const FamilyDashboardPage = load(() => import('../pages/family/FamilyDashboardPage'));
+const FamilyInvitationsPage = load(() => import('../pages/family/FamilyInvitationsPage'));
+const FamilyMembersPage = load(() => import('../pages/family/FamilyMembersPage'));
+const FamilyGoalsPage = load(() => import('../pages/family/FamilyGoalsPage'));
+const FamilyActivityPage = load(() => import('../pages/family/FamilyActivityPage'));
 
 function RouteLoading() {
   return (
@@ -56,35 +61,40 @@ export default function AppRoutes() {
           </Route>
           <Route element={<ProtectedRoute />}>
             <Route element={<RoleProtectedRoute roles={['customer']} />}>
-            <Route path="dashboard" element={<CustomerDashboardPage />} />
-            <Route path="notifications" element={<NotificationsPage />} />
-            <Route path="accounts" element={<AccountsPage />} />
-            <Route path="accounts/:accountId" element={<AccountDetailsPage />} />
-            <Route path="beneficiaries" element={<BeneficiariesPage />} />
-            <Route path="loans" element={<LoansPage />} />
-            <Route path="transfer" element={<TransferPage />} />
-            <Route path="transfer/result" element={<TransferResultPage />} />
-            <Route path="transactions" element={<TransactionHistoryPage />} />
-            <Route path="transactions/:transactionId" element={<TransactionDetailsPage />} />
-            <Route path="transactions/:transactionId/receipt" element={<ReceiptPage />} />
+              <Route path="dashboard" element={<CustomerDashboardPage />} />
+              <Route path="notifications" element={<NotificationsPage />} />
+              <Route path="accounts" element={<AccountsPage />} />
+              <Route path="accounts/:accountId" element={<AccountDetailsPage />} />
+              <Route path="beneficiaries" element={<BeneficiariesPage />} />
+              <Route path="loans" element={<LoansPage />} />
+              <Route path="family" element={<FamilyDashboardPage />} />
+              <Route path="family/invitations" element={<FamilyInvitationsPage />} />
+              <Route path="family/members" element={<FamilyMembersPage />} />
+              <Route path="family/goals" element={<FamilyGoalsPage />} />
+              <Route path="family/activity" element={<FamilyActivityPage />} />
+              <Route path="transfer" element={<TransferPage />} />
+              <Route path="transfer/result" element={<TransferResultPage />} />
+              <Route path="transactions" element={<TransactionHistoryPage />} />
+              <Route path="transactions/:transactionId" element={<TransactionDetailsPage />} />
+              <Route path="transactions/:transactionId/receipt" element={<ReceiptPage />} />
             </Route>
           </Route>
           <Route element={<ProtectedRoute />}>
             <Route element={<RoleProtectedRoute roles={['employee']} />}>
-            <Route path="employee/dashboard" element={<EmployeeDashboardPage />} />
+              <Route path="employee/dashboard" element={<EmployeeDashboardPage />} />
             </Route>
           </Route>
           <Route element={<ProtectedRoute />}>
             <Route element={<RoleProtectedRoute roles={['admin']} />}>
-            <Route path="admin/dashboard" element={<AdminDashboardPage />} />
-            <Route path="admin/operations" element={<AdminOperationsPage />} />
+              <Route path="admin/dashboard" element={<AdminDashboardPage />} />
+              <Route path="admin/operations" element={<AdminOperationsPage />} />
             </Route>
           </Route>
           <Route element={<ProtectedRoute />}>
             <Route element={<RoleProtectedRoute roles={['employee', 'admin']} />}>
-            <Route path="account-reviews" element={<AccountReviewPage />} />
-            <Route path="loan-reviews" element={<LoanReviewPage />} />
-            <Route path="transaction-monitoring" element={<TransactionMonitoringPage />} />
+              <Route path="account-reviews" element={<AccountReviewPage />} />
+              <Route path="loan-reviews" element={<LoanReviewPage />} />
+              <Route path="transaction-monitoring" element={<TransactionMonitoringPage />} />
             </Route>
           </Route>
           <Route path="*" element={<NotFoundPage />} />

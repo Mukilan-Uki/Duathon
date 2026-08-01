@@ -81,3 +81,12 @@ export const contributeGoalSchema = z.object({
     })
     .strict(),
 });
+export const announcementSchema = z.object({
+  params: familyParams,
+  body: z
+    .object({
+      title: z.string().trim().min(3).max(100),
+      message: z.string().trim().min(5).max(500),
+    })
+    .strict(),
+});

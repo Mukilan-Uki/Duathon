@@ -22,6 +22,7 @@ const menus = {
     { to: '/transactions', label: 'Transactions', icon: ReceiptText },
     { to: '/beneficiaries', label: 'Beneficiaries', icon: UsersRound },
     { to: '/loans', label: 'Loans', icon: WalletCards },
+    { to: '/family', label: 'Family Banking', icon: UsersRound },
     { to: '/notifications', label: 'Notifications', icon: Bell },
     { to: '/profile', label: 'Profile', icon: UserRound },
   ],

@@ -2,6 +2,8 @@ import crypto from 'node:crypto';
 import mongoose from 'mongoose';
 import { env } from '../config/env.js';
 import Account from '../models/Account.js';
+import AuditLog from '../models/AuditLog.js';
+import FamilyAnnouncement from '../models/FamilyAnnouncement.js';
 import FamilyGoal from '../models/FamilyGoal.js';
 import FamilyGoalContribution from '../models/FamilyGoalContribution.js';
 import FamilyGroup from '../models/FamilyGroup.js';
@@ -251,6 +253,101 @@ export function listMyInvitations(userId) {
     .populate('family', 'name familyCode status')
     .populate('invitedBy', 'firstName lastName')
     .sort({ createdAt: -1 });
+}
+
+export async function listFamilyInvitations(familyId, actor) {
+  const family = await FamilyGroup.findById(familyId);
+  requireAdmin(family, actor._id);
+  return FamilyInvitation.find({ family: familyId })
+    .populate('invitedUser', 'firstName lastName email')
+    .populate('invitedBy', 'firstName lastName')
+    .sort({ createdAt: -1 });
+}
+
+export async function createAnnouncement(familyId, actor, input, metadata) {
+  const family = await FamilyGroup.findById(familyId);
+  requireMember(family, actor._id, 'createFamilyAnnouncements');
+  const announcement = await FamilyAnnouncement.create({
+    family: familyId,
+    author: actor._id,
+    ...input,
+  });
+  await createAuditLog({
+    actor: actor._id,
+    action: 'FAMILY_ANNOUNCEMENT_CREATED',
+    targetType: 'FamilyAnnouncement',
+    targetId: announcement._id,
+    before: null,
+    after: { family: familyId, title: announcement.title },
+    metadata,
+  });
+  await Promise.all(
+    family.members
+      .filter((member) => member.status === 'active')
+      .map((member) =>
+        createNotification({
+          recipient: member.user,
+          type: 'account',
+          title: announcement.title,
+          message: announcement.message,
+          targetType: 'FamilyAnnouncement',
+          targetId: announcement._id,
+        }),
+      ),
+  );
+  return announcement;
+}
+
+export async function listAnnouncements(familyId, userId) {
+  const family = await FamilyGroup.findById(familyId);
+  requireMember(family, userId);
+  return FamilyAnnouncement.find({ family: familyId, status: 'active' })
+    .populate('author', 'firstName lastName')
+    .sort({ createdAt: -1 })
+    .limit(20);
+}
+
+export async function getFamilyDashboard(familyId, userId) {
+  const familyDocument = await FamilyGroup.findById(familyId).populate(
+    'members.user',
+    'firstName lastName email role',
+  );
+  requireMember(familyDocument, userId);
+  const goalIds = await FamilyGoal.find({ family: familyId }).distinct('_id');
+  const announcementIds = await FamilyAnnouncement.find({ family: familyId }).distinct('_id');
+  const [goals, pendingInvitations, announcements, activity] = await Promise.all([
+    FamilyGoal.find({ family: familyId }).sort({ createdAt: -1 }).limit(10),
+    FamilyInvitation.countDocuments({
+      family: familyId,
+      status: 'pending',
+      expiresAt: { $gt: new Date() },
+    }),
+    FamilyAnnouncement.find({ family: familyId, status: 'active' })
+      .populate('author', 'firstName lastName')
+      .sort({ createdAt: -1 })
+      .limit(5),
+    AuditLog.find({
+      $or: [
+        { targetType: 'FamilyGroup', targetId: familyId },
+        { targetType: 'FamilyGoal', targetId: { $in: goalIds } },
+        { targetType: 'FamilyAnnouncement', targetId: { $in: announcementIds } },
+      ],
+    })
+      .populate('actor', 'firstName lastName')
+      .sort({ createdAt: -1 })
+      .limit(20),
+  ]);
+  return {
+    family: safeFamily(familyDocument),
+    goals,
+    pendingInvitations,
+    announcements,
+    activity,
+    totalContributionsMinor: goals.reduce((sum, goal) => sum + goal.currentAmountMinor, 0),
+    activeMembers: familyDocument.members.filter((member) => member.status === 'active').length,
+    juniorSummaries: [],
+    pendingJuniorApprovals: 0,
+  };
 }
 
 export async function respondToInvitation(invitationId, userId, decision, metadata) {
