@@ -8,11 +8,19 @@ const mocks = vi.hoisted(() => ({
   createAllowance: vi.fn(),
   listAllowances: vi.fn(),
   changeAllowance: vi.fn(),
+  executeAllowance: vi.fn(),
   requestTransaction: vi.fn(),
   myRequests: vi.fn(),
   pendingApprovals: vi.fn(),
   reviewRequest: vi.fn(),
   cancelRequest: vi.fn(),
+  requestBeneficiary: vi.fn(),
+  reviewBeneficiary: vi.fn(),
+  removeBeneficiaryPermission: vi.fn(),
+  convertToAdult: vi.fn(),
+  createJuniorGoal: vi.fn(),
+  listJuniorGoals: vi.fn(),
+  contributeJuniorGoal: vi.fn(),
 }));
 vi.mock('../services/juniorBankingService.js', () => mocks);
 vi.mock('../middleware/authenticate.js', () => ({

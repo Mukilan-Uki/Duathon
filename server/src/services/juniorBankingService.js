@@ -1,12 +1,17 @@
 import Account from '../models/Account.js';
 import FamilyGroup from '../models/FamilyGroup.js';
 import JuniorAllowance from '../models/JuniorAllowance.js';
+import JuniorBeneficiaryPermission from '../models/JuniorBeneficiaryPermission.js';
 import JuniorProfile from '../models/JuniorProfile.js';
+import JuniorSavingsGoal from '../models/JuniorSavingsGoal.js';
 import JuniorTransactionRequest from '../models/JuniorTransactionRequest.js';
+import RefreshToken from '../models/RefreshToken.js';
+import Transaction from '../models/Transaction.js';
 import User from '../models/User.js';
 import { AppError } from '../utils/AppError.js';
 import { generateUniqueAccountNumber } from '../utils/accountNumber.js';
 import { createAuditLog } from './auditService.js';
+import { createNotification } from './notificationService.js';
 import { transferMoney } from './transactionService.js';
 
 const id = (value) => String(value?._id || value);
@@ -23,6 +28,35 @@ function guardian(profile, userId, permission) {
   if (!entry || (permission && !entry.permissions[permission]))
     throw new AppError('Guardian permission required', 403);
   return entry;
+}
+
+function periodStart(days, now = new Date()) {
+  return new Date(now.getTime() - days * 24 * 60 * 60 * 1000);
+}
+
+async function enforceSpendingLimits(profile, amountMinor) {
+  const limits = [
+    ['dailyLimitMinor', periodStart(1)],
+    ['weeklyLimitMinor', periodStart(7)],
+    ['monthlyLimitMinor', periodStart(30)],
+  ];
+  for (const [field, from] of limits) {
+    const limit = profile.spendingLimits[field];
+    if (!limit) continue;
+    const [result] = await Transaction.aggregate([
+      {
+        $match: {
+          senderUser: profile.juniorUser,
+          status: 'completed',
+          initiatedAt: { $gte: from },
+        },
+      },
+      { $group: { _id: null, total: { $sum: { $ifNull: ['$amountMinor', '$amount'] } } } },
+    ]);
+    if ((result?.total || 0) + amountMinor > limit) {
+      throw new AppError(`${field.replace('LimitMinor', '')} spending limit exceeded`, 422);
+    }
+  }
 }
 
 export async function createJuniorProfile(actor, input, metadata) {
@@ -167,6 +201,48 @@ export async function createAllowance(actor, juniorId, input) {
     description: input.description,
   });
 }
+
+function nextAllowanceRun(frequency, value) {
+  const next = new Date(value);
+  if (frequency === 'weekly') next.setUTCDate(next.getUTCDate() + 7);
+  if (frequency === 'monthly') next.setUTCMonth(next.getUTCMonth() + 1);
+  return next;
+}
+
+export async function executeAllowance(actor, allowanceId, key, metadata) {
+  const allowance = await JuniorAllowance.findById(allowanceId).populate('juniorProfile');
+  if (!allowance) throw new AppError('Allowance not found', 404);
+  guardian(allowance.juniorProfile, actor._id, 'manageAllowances');
+  if (allowance.status !== 'active' || allowance.nextRunAt > new Date())
+    throw new AppError('Allowance is not due', 409);
+  const destination = await Account.findById(allowance.destinationAccount).select('+accountNumber');
+  if (!destination) throw new AppError('Junior destination account not found', 404);
+  try {
+    const result = await transferMoney(
+      actor._id,
+      {
+        senderAccountId: allowance.sourceAccount.toString(),
+        receiverAccountNumber: destination.accountNumber,
+        amountMinor: allowance.amountMinor,
+        description: allowance.description || 'Junior allowance',
+      },
+      key,
+      metadata,
+    );
+    allowance.lastRunAt = new Date();
+    allowance.lastIdempotencyKey = key;
+    allowance.failureReason = '';
+    if (allowance.frequency === 'one_time') allowance.status = 'completed';
+    else allowance.nextRunAt = nextAllowanceRun(allowance.frequency, allowance.nextRunAt);
+    await allowance.save();
+    return { allowance, transaction: result.transaction, duplicate: result.duplicate };
+  } catch (error) {
+    allowance.status = 'failed';
+    allowance.failureReason = error.message.slice(0, 300);
+    await allowance.save();
+    throw error;
+  }
+}
 export async function listAllowances(actor, juniorId) {
   const profile = await getProfileFor(actor, juniorId);
   return JuniorAllowance.find({ juniorProfile: profile._id }).sort({ createdAt: -1 });
@@ -194,6 +270,7 @@ export async function requestTransaction(actor, input, key) {
     input.amountMinor > profile.spendingLimits.perTransactionLimitMinor
   )
     throw new AppError('Per-transaction spending limit exceeded', 422);
+  await enforceSpendingLimits(profile, input.amountMinor);
   const request = await JuniorTransactionRequest.create({
     juniorProfile: profile._id,
     juniorAccount: account._id,
@@ -268,6 +345,7 @@ export async function reviewRequest(actor, requestId, decision, reason, metadata
       request.amountMinor > request.juniorProfile.spendingLimits.perTransactionLimitMinor
     )
       throw new AppError('Per-transaction spending limit exceeded', 422);
+    await enforceSpendingLimits(request.juniorProfile, request.amountMinor);
     const result = await transferMoney(
       request.juniorProfile.juniorUser,
       {
@@ -295,4 +373,132 @@ export async function cancelRequest(actor, requestId) {
   if (!request) throw new AppError('Pending transaction request not found', 404);
   request.status = 'cancelled';
   return request.save();
+}
+
+export async function requestBeneficiary(actor, input) {
+  const profile = await JuniorProfile.findOne({ juniorUser: actor._id, status: 'active' });
+  if (!profile || !profile.permissions.canRequestBeneficiaries)
+    throw new AppError('Beneficiary requests are unavailable', 403);
+  return JuniorBeneficiaryPermission.findOneAndUpdate(
+    { juniorProfile: profile._id, beneficiary: input.beneficiaryId },
+    { $set: { requestedBy: actor._id, status: 'pending', reviewedBy: null, reviewReason: '' } },
+    { upsert: true, new: true, runValidators: true },
+  );
+}
+
+export async function reviewBeneficiary(actor, permissionId, decision, reason) {
+  const permission =
+    await JuniorBeneficiaryPermission.findById(permissionId).populate('juniorProfile');
+  if (!permission) throw new AppError('Beneficiary request not found', 404);
+  guardian(permission.juniorProfile, actor._id, 'manageBeneficiaries');
+  permission.status = decision;
+  permission.reviewedBy = actor._id;
+  permission.reviewReason = reason || '';
+  return permission.save();
+}
+
+export async function removeBeneficiaryPermission(actor, permissionId) {
+  return reviewBeneficiary(actor, permissionId, 'removed', 'Permission removed by guardian');
+}
+
+export async function convertToAdult(actor, juniorId, metadata) {
+  if (!['employee', 'admin'].includes(actor.role))
+    throw new AppError('Staff authorization required', 403);
+  const profile = await JuniorProfile.findById(juniorId);
+  if (!profile || !['active', 'suspended'].includes(profile.status))
+    throw new AppError('Convertible junior profile not found', 404);
+  const junior = await User.findById(profile.juniorUser);
+  if (!junior?.dateOfBirth || age(junior.dateOfBirth) < Number(process.env.ADULT_MIN_AGE || 18))
+    throw new AppError('Junior has not reached the configured adult age', 422);
+  await Account.updateMany(
+    { owner: junior._id, isJuniorRestricted: true },
+    { $set: { isJuniorRestricted: false } },
+  );
+  await FamilyGroup.updateOne(
+    { _id: profile.family, 'members.user': junior._id },
+    {
+      $set: {
+        'members.$.role': 'adult_member',
+        'members.$.permissions': { viewSharedGoals: true, contributeToSharedGoals: true },
+      },
+    },
+  );
+  profile.status = 'converted_to_adult';
+  await profile.save();
+  await RefreshToken.updateMany(
+    { user: junior._id, revokedAt: null },
+    { $set: { revokedAt: new Date(), revokedReason: 'junior_converted_to_adult' } },
+  );
+  await createNotification({
+    recipient: junior._id,
+    type: 'account',
+    title: 'Junior account converted',
+    message: 'Your junior restrictions have been removed after staff verification.',
+  });
+  await createAuditLog({
+    actor: actor._id,
+    action: 'junior_converted_to_adult',
+    targetType: 'JuniorProfile',
+    targetId: profile._id,
+    after: { juniorUser: junior._id },
+    metadata,
+  });
+  return profile;
+}
+
+export async function createJuniorGoal(actor, input) {
+  const profile = await JuniorProfile.findOne({ juniorUser: actor._id, status: 'active' });
+  if (!profile?.permissions.canCreateSavingsGoals)
+    throw new AppError('Junior savings goals are unavailable', 403);
+  return JuniorSavingsGoal.create({
+    juniorProfile: profile._id,
+    title: input.title,
+    targetAmountMinor: input.targetAmountMinor,
+    createdBy: actor._id,
+  });
+}
+export async function listJuniorGoals(actor, juniorId) {
+  const profile = await getProfileFor(actor, juniorId);
+  return JuniorSavingsGoal.find({ juniorProfile: profile._id }).sort({ createdAt: -1 });
+}
+export async function contributeJuniorGoal(actor, goalId, input, key, metadata) {
+  const goal = await JuniorSavingsGoal.findOne({ _id: goalId, status: 'active' }).populate(
+    'juniorProfile',
+  );
+  if (!goal) throw new AppError('Active junior savings goal not found', 404);
+  guardian(goal.juniorProfile, actor._id, 'manageAllowances');
+  if (goal.currentAmountMinor + input.amountMinor > goal.targetAmountMinor)
+    throw new AppError('Contribution exceeds remaining goal amount', 422);
+  const [source, destination] = await Promise.all([
+    Account.findOne({ _id: input.sourceAccountId, owner: actor._id, status: 'active' }),
+    Account.findOne({
+      owner: goal.juniorProfile.juniorUser,
+      status: 'active',
+      isJuniorRestricted: true,
+    }).select('+accountNumber'),
+  ]);
+  if (!source || !destination)
+    throw new AppError('Eligible contribution accounts are required', 422);
+  const result = await transferMoney(
+    actor._id,
+    {
+      senderAccountId: source._id.toString(),
+      receiverAccountNumber: destination.accountNumber,
+      amountMinor: input.amountMinor,
+      description: `Junior savings: ${goal.title}`,
+    },
+    key,
+    metadata,
+  );
+  if (!goal.contributions.some((item) => id(item.transaction) === id(result.transaction._id))) {
+    goal.currentAmountMinor += input.amountMinor;
+    goal.contributions.push({
+      contributor: actor._id,
+      amountMinor: input.amountMinor,
+      transaction: result.transaction._id,
+    });
+    if (goal.currentAmountMinor === goal.targetAmountMinor) goal.status = 'completed';
+    await goal.save();
+  }
+  return { goal, transaction: result.transaction, duplicate: result.duplicate };
 }

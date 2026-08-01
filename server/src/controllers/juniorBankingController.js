@@ -75,6 +75,19 @@ export async function cancelAllowance(req, res) {
   await service.changeAllowance(req.user, req.params.allowanceId, { status: 'cancelled' });
   return successResponse(res, { message: 'Allowance cancelled' });
 }
+export async function executeAllowance(req, res) {
+  const result = await service.executeAllowance(
+    req.user,
+    req.params.allowanceId,
+    req.idempotencyKey,
+    metadata(req),
+  );
+  return successResponse(res, {
+    statusCode: result.duplicate ? 200 : 201,
+    message: result.duplicate ? 'Allowance already processed' : 'Allowance sent',
+    data: result,
+  });
+}
 export async function requestTransaction(req, res) {
   const request = await service.requestTransaction(req.user, req.body, req.idempotencyKey);
   return successResponse(res, {
@@ -115,4 +128,65 @@ export async function reject(req, res) {
 export async function cancelRequest(req, res) {
   const request = await service.cancelRequest(req.user, req.params.requestId);
   return successResponse(res, { message: 'Transaction request cancelled', data: { request } });
+}
+export async function requestBeneficiary(req, res) {
+  const permission = await service.requestBeneficiary(req.user, req.body);
+  return successResponse(res, {
+    statusCode: 201,
+    message: 'Beneficiary approval requested',
+    data: { permission },
+  });
+}
+export async function approveBeneficiary(req, res) {
+  const permission = await service.reviewBeneficiary(
+    req.user,
+    req.params.permissionId,
+    'approved',
+    req.body.reason,
+  );
+  return successResponse(res, { message: 'Junior beneficiary approved', data: { permission } });
+}
+export async function rejectBeneficiary(req, res) {
+  const permission = await service.reviewBeneficiary(
+    req.user,
+    req.params.permissionId,
+    'rejected',
+    req.body.reason,
+  );
+  return successResponse(res, { message: 'Junior beneficiary rejected', data: { permission } });
+}
+export async function removeBeneficiary(req, res) {
+  await service.removeBeneficiaryPermission(req.user, req.params.permissionId);
+  return successResponse(res, { message: 'Junior beneficiary permission removed' });
+}
+export async function convert(req, res) {
+  const profile = await service.convertToAdult(req.user, req.params.juniorId, metadata(req));
+  return successResponse(res, { message: 'Junior profile converted to adult', data: { profile } });
+}
+export async function createGoal(req, res) {
+  const goal = await service.createJuniorGoal(req.user, req.body);
+  return successResponse(res, {
+    statusCode: 201,
+    message: 'Junior savings goal created',
+    data: { goal },
+  });
+}
+export async function goals(req, res) {
+  return successResponse(res, {
+    data: { goals: await service.listJuniorGoals(req.user, req.params.juniorId) },
+  });
+}
+export async function contributeGoal(req, res) {
+  const result = await service.contributeJuniorGoal(
+    req.user,
+    req.params.goalId,
+    req.body,
+    req.idempotencyKey,
+    metadata(req),
+  );
+  return successResponse(res, {
+    statusCode: result.duplicate ? 200 : 201,
+    message: result.duplicate ? 'Contribution already processed' : 'Goal contribution completed',
+    data: result,
+  });
 }

@@ -80,6 +80,27 @@ export const allowanceSchema = z.object({
   }),
 });
 export const allowanceIdSchema = params('allowanceId');
+export const beneficiarySchema = z.object({
+  params: z.object({}).optional(),
+  query: z.object({}).optional(),
+  body: z.object({ beneficiaryId: objectId }),
+});
+export const permissionIdSchema = params('permissionId');
+export const permissionReviewSchema = z.object({
+  params: z.object({ permissionId: objectId }),
+  query: z.object({}).optional(),
+  body: z.object({ reason: z.string().trim().max(300).optional() }),
+});
+export const goalSchema = z.object({
+  params: z.object({}).optional(),
+  query: z.object({}).optional(),
+  body: z.object({ title: z.string().trim().min(3).max(100), targetAmountMinor: minor.positive() }),
+});
+export const goalContributionSchema = z.object({
+  params: z.object({ goalId: objectId }),
+  query: z.object({}).optional(),
+  body: z.object({ sourceAccountId: objectId, amountMinor: minor.positive() }),
+});
 export const requestSchema = z.object({
   params: z.object({}).optional(),
   query: z.object({}).optional(),

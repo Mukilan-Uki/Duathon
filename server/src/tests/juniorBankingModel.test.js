@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import JuniorAllowance from '../models/JuniorAllowance.js';
 import JuniorProfile from '../models/JuniorProfile.js';
 import JuniorTransactionRequest from '../models/JuniorTransactionRequest.js';
+import JuniorSavingsGoal from '../models/JuniorSavingsGoal.js';
 
 const oid = () => new mongoose.Types.ObjectId();
 describe('Junior Banking models', () => {
@@ -42,5 +43,14 @@ describe('Junior Banking models', () => {
     expect(Object.keys(request.validateSync().errors)).toEqual(
       expect.arrayContaining(['expiresAt', 'idempotencyKey']),
     );
+  });
+  it('stores junior savings values in integer minor units', () => {
+    const goal = new JuniorSavingsGoal({
+      juniorProfile: oid(),
+      title: 'New bicycle',
+      targetAmountMinor: 1000.5,
+      createdBy: oid(),
+    });
+    expect(goal.validateSync().errors.targetAmountMinor).toBeDefined();
   });
 });
