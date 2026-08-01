@@ -33,13 +33,13 @@ with different data returns HTTP 409.
 
 ## Endpoints
 
-| Method | Endpoint | Access |
-| --- | --- | --- |
-| POST | `/api/transfers/validate-recipient` | customer |
-| POST | `/api/transfers` | customer |
-| GET | `/api/transactions/my-transactions` | customer |
-| GET | `/api/transactions/:transactionId` | participant, employee, admin |
-| GET | `/api/transactions/:transactionId/receipt` | participant, employee, admin |
+| Method | Endpoint                                   | Access                       |
+| ------ | ------------------------------------------ | ---------------------------- |
+| POST   | `/api/transfers/validate-recipient`        | customer                     |
+| POST   | `/api/transfers`                           | customer                     |
+| GET    | `/api/transactions/my-transactions`        | customer                     |
+| GET    | `/api/transactions/:transactionId`         | participant, employee, admin |
+| GET    | `/api/transactions/:transactionId/receipt` | participant, employee, admin |
 
 Recipient responses and transaction views contain masked names/account numbers and never expose
 balances, contact details, credentials, token material, or raw request metadata.

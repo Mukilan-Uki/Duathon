@@ -27,16 +27,16 @@ server console. Development mail output must never be enabled in production.
 
 ## Authentication endpoints
 
-| Method | Path | Authentication |
-| --- | --- | --- |
-| POST | `/api/auth/register` | Public |
-| POST | `/api/auth/login` | Public |
-| POST | `/api/auth/refresh` | Refresh cookie and trusted origin |
-| POST | `/api/auth/logout` | Refresh cookie and trusted origin |
-| GET | `/api/auth/me` | Bearer access token |
-| POST | `/api/auth/verify-email` | Public, rate limited |
-| POST | `/api/auth/resend-verification` | Public, rate limited |
-| POST | `/api/auth/forgot-password` | Public, rate limited |
-| POST | `/api/auth/reset-password` | Public, rate limited |
+| Method | Path                            | Authentication                    |
+| ------ | ------------------------------- | --------------------------------- |
+| POST   | `/api/auth/register`            | Public                            |
+| POST   | `/api/auth/login`               | Public                            |
+| POST   | `/api/auth/refresh`             | Refresh cookie and trusted origin |
+| POST   | `/api/auth/logout`              | Refresh cookie and trusted origin |
+| GET    | `/api/auth/me`                  | Bearer access token               |
+| POST   | `/api/auth/verify-email`        | Public, rate limited              |
+| POST   | `/api/auth/resend-verification` | Public, rate limited              |
+| POST   | `/api/auth/forgot-password`     | Public, rate limited              |
+| POST   | `/api/auth/reset-password`      | Public, rate limited              |
 
 The reset link uses a cryptographically random, single-use token. Only its hash is persisted.

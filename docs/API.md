@@ -23,13 +23,33 @@ Base URL: `/api`
 
 The access token is held in client memory. The signed refresh token is only stored in an HttpOnly cookie and only its hash is persisted.
 
+## Family, Junior Banking and Security
+
+Family Banking is mounted at `/families` and covers group creation, the current family, expiring invitations, member roles/permissions, announcements, dashboard aggregation and shared goals. Goal contributions require `Idempotency-Key`.
+
+Junior Banking is mounted at `/junior-banking`. It provides the junior dashboard, guardian profiles, profile/account creation, controls, allowances, transaction requests/approvals, beneficiary permissions, savings goals and staff conversion. All financial amounts are integer `amountMinor` values and all money movement delegates to the transfer service.
+
+Trusted Devices is mounted at `/security`:
+
+| Method | Endpoint                             | Purpose                                          |
+| ------ | ------------------------------------ | ------------------------------------------------ |
+| GET    | `/security/devices`                  | List safe device metadata                        |
+| GET    | `/security/devices/current`          | Identify the current device                      |
+| POST   | `/security/devices/trust`            | Trust current device after password confirmation |
+| PATCH  | `/security/devices/:deviceId`        | Rename an owned device                           |
+| DELETE | `/security/devices/:deviceId/trust`  | Remove trust and linked sessions                 |
+| POST   | `/security/devices/:deviceId/logout` | Terminate a device's sessions                    |
+| POST   | `/security/devices/logout-all`       | Revoke sessions, optionally preserving current   |
+
+Raw device tokens and hashes are never returned.
+
 ## Accounts
 
 All account endpoints require a Bearer access token.
 
 | Method | Endpoint                      | Role            | Purpose                                         |
 | ------ | ----------------------------- | --------------- | ----------------------------------------------- |
-| POST   | `/accounts`                   | Customer        | Submit a Savings or Current account application |
+| POST   | `/accounts/apply`             | Customer        | Submit a Savings or Current account application |
 | GET    | `/accounts/me`                | Customer        | List the authenticated customer’s accounts      |
 | GET    | `/accounts/:accountId`        | Owner or staff  | View an authorized account                      |
 | GET    | `/accounts/pending`           | Employee, admin | List pending applications                       |
@@ -42,8 +62,8 @@ Account numbers and balances are never accepted from the client. Balance values 
 
 | Method | Endpoint                               | Role            | Purpose                                  |
 | ------ | -------------------------------------- | --------------- | ---------------------------------------- |
-| POST   | `/transactions/transfer`               | Customer        | Atomically transfer money                |
-| GET    | `/transactions/history`                | Customer        | Search/filter paginated personal history |
+| POST   | `/transfers`                           | Customer        | Atomically transfer money                |
+| GET    | `/transactions/my-transactions`        | Customer        | Search/filter paginated personal history |
 | GET    | `/transactions/monitor`                | Employee, admin | Read-only transaction monitoring         |
 | GET    | `/transactions/:transactionId`         | Owner or staff  | View authorized details                  |
 | GET    | `/transactions/:transactionId/receipt` | Owner or staff  | Generate receipt data                    |

@@ -67,6 +67,16 @@ if (
   throw new Error('Production requires unique JWT_ACCESS_SECRET and JWT_REFRESH_SECRET values');
 }
 
+if (
+  env.NODE_ENV === 'production' &&
+  (env.DEVICE_TOKEN_SECRET.includes('development-') ||
+    env.DEVICE_TOKEN_SECRET === env.JWT_ACCESS_SECRET ||
+    env.DEVICE_TOKEN_SECRET === env.JWT_REFRESH_SECRET ||
+    env.JWT_ACCESS_SECRET === env.JWT_REFRESH_SECRET)
+) {
+  throw new Error('Production requires three distinct authentication and device secrets');
+}
+
 if (env.NODE_ENV === 'production' && !env.MONGODB_URI) {
   throw new Error('Production requires MONGODB_URI');
 }

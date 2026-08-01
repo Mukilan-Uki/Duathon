@@ -26,4 +26,14 @@ In local development without SMTP, security codes are written to the server cons
 
 ## Dependency audit note
 
-React Router 7.18.1 resolves the general client-routing advisories reported for earlier releases. npm currently reports one remaining high advisory for React Server Components mode. This application is a client-only Vite SPA and does not enable React Server Components, so the vulnerable code path is not used. Recheck this advisory during every dependency update.
+React Router 7.18.2 resolves the general client-routing advisories reported for earlier releases. npm currently reports one remaining high advisory for React Server Components mode. This application is a client-only Vite SPA and does not enable React Server Components, so the vulnerable code path is not used. Recheck this advisory during every dependency update.
+
+## Family, junior and trusted-device controls
+
+Family roles and every sharing permission are stored and enforced by services. Adult balances are never implicitly shared. Goal contributions use integer minor units, source-account ownership checks, transactions and idempotency.
+
+Junior accounts carry a backend restriction marker. Direct normal transfers are rejected and supervised transfers revalidate limits and approval state before calling the existing transfer service. Guardians receive only explicitly granted controls; adult conversion is restricted to staff and revokes obsolete sessions.
+
+Trusted-device cookies contain random server-generated tokens and are HTTP-only, Secure in production and SameSite-restricted. MongoDB stores only an HMAC-SHA-256 digest. Trust and destructive session actions require password confirmation; cookie-backed mutations enforce the trusted origin and sensitive confirmation routes are rate-limited. Device labels and user agents are never identity proof.
+
+The project is not certified as production bank-grade. See [SECURITY_REVIEW.md](SECURITY_REVIEW.md), [KNOWN_LIMITATIONS.md](KNOWN_LIMITATIONS.md) and [DISASTER_RECOVERY.md](DISASTER_RECOVERY.md).

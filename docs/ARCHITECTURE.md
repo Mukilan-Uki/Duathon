@@ -43,3 +43,46 @@ Notification creation occurs alongside the event that generated it and respects 
 ## Client delivery and resilience
 
 Each page is loaded through a route-level dynamic import. Authentication and layout infrastructure remain in the initial bundle, while role pages and chart libraries load only when requested. A top-level error boundary provides a safe recovery screen for unexpected rendering failures without suggesting that a financial action completed.
+
+## Family, junior and device flows
+
+```mermaid
+flowchart LR
+  A[Authenticated adult] --> P[Family permission service]
+  P --> I[Invitations and members]
+  P --> G[Shared goals]
+  G --> T[Transactional transfer service]
+```
+
+```mermaid
+sequenceDiagram
+  participant J as Junior
+  participant API
+  participant G as Guardian
+  participant T as Transfer service
+  J->>API: Create idempotent request
+  API-->>G: Pending approval
+  G->>API: Approve
+  API->>API: Revalidate expiry, account and limits
+  API->>T: Execute existing secure transfer
+  T-->>API: Completed transaction
+  API-->>J: Completed request
+```
+
+```mermaid
+sequenceDiagram
+  participant B as Browser
+  participant A as Auth API
+  participant D as Device store
+  participant R as Refresh-token store
+  B->>A: Password login + HTTP-only device cookie
+  A->>D: HMAC token lookup/update
+  A->>R: Create session linked to device
+  A-->>B: Access token + rotated HTTP-only cookies
+```
+
+Family membership is not account authorization. Junior profiles are server-owned policy records rather than browser-assigned roles. Device user-agent data is a display hint only; proof uses a random cookie whose HMAC digest is stored.
+
+## Deployment and recovery
+
+Netlify serves the static SPA with fallback routing, Render hosts the stateless Express API, and Atlas supplies a transaction-capable MongoDB replica set. Provider secrets remain outside Git. Recovery restores a verified backup in isolation, reconciles ledger relationships and promotes a known application release; completed financial records are never deleted as a repair shortcut.

@@ -14,6 +14,9 @@ A secure full-stack digital banking platform built for **Duothan 6.0 – Phase 0
 - Saved beneficiaries
 - Loan applications, status tracking, repayment schedules, and idempotent payments
 - Dashboard analytics, notifications, login history, and notification preferences
+- Family Banking with explicit member permissions, invitations, announcements, and shared goals
+- Supervised Junior Banking with allowances, spending limits, approvals, and personal goals
+- Trusted-device review, trust removal, risk-aware login history, and remote session logout
 
 ### Employee
 
@@ -105,6 +108,11 @@ docs/                   API, architecture, security, quality, and user guides
 - [User guide](docs/USER_GUIDE.md)
 - [Deployment guide](docs/DEPLOYMENT.md)
 - [Final submission checklist](docs/SUBMISSION_CHECKLIST.md)
+- [Database schema](docs/DATABASE_SCHEMA.md)
+- [Testing](docs/TESTING.md)
+- [Disaster recovery](docs/DISASTER_RECOVERY.md)
+- [Known limitations](docs/KNOWN_LIMITATIONS.md)
+- [Contributing](docs/CONTRIBUTING.md)
 
 ## Screenshots
 
@@ -121,3 +129,25 @@ Do not capture real customer information, access tokens, OTPs, or credentials.
 ## Deployment
 
 The repository includes `netlify.toml` and `render.yaml`. Follow the [deployment guide](docs/DEPLOYMENT.md) to configure provider variables, Atlas access, CORS, health checks, and post-deployment verification.
+
+Deployment URLs are intentionally left blank until the owner completes and verifies deployment:
+
+- Frontend: _not deployed/verified in this workspace_
+- Backend: _not deployed/verified in this workspace_
+- Repository: _add the final public GitHub URL_
+
+## Problem and solution
+
+Many prototype banking systems demonstrate screens without enforcing ownership, transactional money movement, or role separation. Duothan provides a layered reference implementation where authorization and financial rules live on the server, financial writes use MongoDB transactions and idempotency, and family/junior access never implies unrestricted access to another adult's money.
+
+## Team
+
+Add the final team member names, student identifiers, and responsibilities before submission. No names were inferred or invented by the implementation process.
+
+## License
+
+Licensed under the MIT License. See [LICENSE](LICENSE).
+
+## Known limitations
+
+This is an educational prototype, not a certified bank or PCI-compliant production service. See [Known limitations](docs/KNOWN_LIMITATIONS.md).

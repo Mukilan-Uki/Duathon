@@ -5,7 +5,7 @@ services:
     plan: free
     buildCommand: npm ci
     startCommand: npm start --workspace server
-    healthCheckPath: /api/health
+    healthCheckPath: /api/health/ready
     autoDeploy: true
     envVars:
       - key: NODE_ENV
@@ -20,6 +20,18 @@ services:
         generateValue: true
       - key: JWT_REFRESH_SECRET
         generateValue: true
+      - key: DEVICE_TOKEN_SECRET
+        generateValue: true
+      - key: DEVICE_COOKIE_NAME
+        value: duothan_device
+      - key: DEVICE_TRUST_DAYS
+        value: '90'
+      - key: JWT_ACCESS_EXPIRES_IN
+        value: 15m
+      - key: JWT_REFRESH_EXPIRES_IN
+        value: 7d
+      - key: REFRESH_COOKIE_DAYS
+        value: '7'
       - key: SMTP_HOST
         sync: false
       - key: SMTP_PORT

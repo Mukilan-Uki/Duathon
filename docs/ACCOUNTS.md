@@ -18,18 +18,18 @@ decisions create customer notifications.
 
 ## API
 
-| Method | Endpoint | Roles |
-| --- | --- | --- |
-| POST | `/api/accounts/apply` | customer |
-| GET | `/api/accounts/my-accounts` | customer |
-| GET | `/api/accounts/:accountId` | owner, employee, admin |
-| GET | `/api/accounts/pending` | employee, admin |
-| GET | `/api/accounts/search` | employee, admin |
-| PATCH | `/api/accounts/:accountId/approve` | employee, admin |
-| PATCH | `/api/accounts/:accountId/reject` | employee, admin |
-| PATCH | `/api/accounts/:accountId/suspend` | employee, admin |
-| PATCH | `/api/accounts/:accountId/reactivate` | employee, admin |
-| PATCH | `/api/accounts/:accountId/close` | admin |
+| Method | Endpoint                              | Roles                  |
+| ------ | ------------------------------------- | ---------------------- |
+| POST   | `/api/accounts/apply`                 | customer               |
+| GET    | `/api/accounts/my-accounts`           | customer               |
+| GET    | `/api/accounts/:accountId`            | owner, employee, admin |
+| GET    | `/api/accounts/pending`               | employee, admin        |
+| GET    | `/api/accounts/search`                | employee, admin        |
+| PATCH  | `/api/accounts/:accountId/approve`    | employee, admin        |
+| PATCH  | `/api/accounts/:accountId/reject`     | employee, admin        |
+| PATCH  | `/api/accounts/:accountId/suspend`    | employee, admin        |
+| PATCH  | `/api/accounts/:accountId/reactivate` | employee, admin        |
+| PATCH  | `/api/accounts/:accountId/close`      | admin                  |
 
 List responses contain masked account numbers. The full number is returned only by an authorized
 account-detail request. Passwords, authentication secrets, and internal audit data are never part
