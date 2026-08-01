@@ -29,6 +29,7 @@ export async function createSession(user, metadata, family = crypto.randomUUID()
     expiresAt: new Date(decodedRefresh.exp * 1000),
     createdByIp: metadata.ip,
     userAgent: metadata.userAgent,
+    trustedDevice: metadata.trustedDevice || null,
   });
 
   return { accessToken: signAccessToken(user), refreshToken };
@@ -68,7 +69,11 @@ export async function rotateRefreshToken(rawToken, metadata) {
     throw new AppError('Invalid session', 401);
   }
 
-  const next = await createSession(user, metadata, stored.family);
+  const next = await createSession(
+    user,
+    { ...metadata, trustedDevice: stored.trustedDevice },
+    stored.family,
+  );
   stored.revokedAt = new Date();
   stored.revokedByIp = metadata.ip;
   stored.replacedByToken = hashToken(next.refreshToken);

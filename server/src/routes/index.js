@@ -10,6 +10,7 @@ import juniorBankingRoutes from './juniorBankingRoutes.js';
 import operationsRoutes from './operationsRoutes.js';
 import transactionRoutes from './transactionRoutes.js';
 import transferRoutes from './transferRoutes.js';
+import securityRoutes from './securityRoutes.js';
 
 const router = Router();
 router.use('/health', healthRoutes);
@@ -23,4 +24,5 @@ router.use('/dashboards', dashboardRoutes);
 router.use('/families', familyRoutes);
 router.use('/junior-banking', juniorBankingRoutes);
 router.use('/operations', operationsRoutes);
+router.use('/security', securityRoutes);
 export default router;

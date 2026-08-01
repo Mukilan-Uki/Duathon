@@ -10,10 +10,11 @@ import { createSession } from './tokenService.js';
 import { createRandomToken, hashToken, timingSafeEqualHex } from '../utils/security.js';
 import { sendPasswordResetEmail } from './emailService.js';
 import { env } from '../config/env.js';
+import { observeLoginDevice } from './trustedDeviceService.js';
 
 const LOCK_MINUTES = 15;
 
-async function recordLogin(user, email, successful, reason, metadata) {
+async function recordLogin(user, email, successful, reason, metadata, observation = null) {
   await LoginHistory.create({
     user: user?._id || null,
     email,
@@ -21,6 +22,10 @@ async function recordLogin(user, email, successful, reason, metadata) {
     reason,
     ipAddress: metadata.ip,
     userAgent: metadata.userAgent,
+    trustedDevice: observation?.device?._id || null,
+    deviceStatus: observation?.device?.status || 'unknown',
+    riskLevel: observation?.riskLevel || (successful ? 'low' : 'medium'),
+    riskReasons: observation?.riskReasons || (successful ? [] : ['failed_attempts']),
   });
 }
 
@@ -99,10 +104,7 @@ export async function loginUser(emailInput, password, metadata) {
     legacyUnsets.emailVerifiedAt = 1;
   }
   if (Object.keys(legacyUpdates).length) {
-    await User.updateOne(
-      { _id: user._id },
-      { $set: legacyUpdates, $unset: legacyUnsets },
-    );
+    await User.updateOne({ _id: user._id }, { $set: legacyUpdates, $unset: legacyUnsets });
     Object.assign(user, legacyUpdates);
     user.passwordHash = undefined;
     user.status = undefined;
@@ -149,8 +151,13 @@ export async function loginUser(emailInput, password, metadata) {
   user.lockUntil = null;
   user.lastLoginAt = new Date();
   await user.save();
-  await recordLogin(user, email, true, 'success', metadata);
-  return { user, ...(await createSession(user, metadata)) };
+  const observation = await observeLoginDevice(user, metadata.deviceToken, metadata);
+  await recordLogin(user, email, true, 'success', metadata, observation);
+  return {
+    user,
+    deviceToken: observation.rawToken,
+    ...(await createSession(user, { ...metadata, trustedDevice: observation.device._id })),
+  };
 }
 
 export async function requestPasswordReset(email, metadata = {}) {

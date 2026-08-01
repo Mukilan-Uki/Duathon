@@ -18,6 +18,9 @@ const result = z
     PASSWORD_RESET_EXPIRES_MINUTES: z.coerce.number().int().positive().max(60).default(15),
     FAMILY_INVITATION_EXPIRES_DAYS: z.coerce.number().int().positive().max(30).default(7),
     ADULT_MIN_AGE: z.coerce.number().int().min(18).max(25).default(18),
+    DEVICE_TOKEN_SECRET: z.string().min(32).default('development-device-secret-change-me-now'),
+    DEVICE_COOKIE_NAME: z.string().min(3).default('duothan_device'),
+    DEVICE_TRUST_DAYS: z.coerce.number().int().positive().max(365).default(90),
     SMTP_HOST: z.string().optional().default(''),
     SMTP_PORT: z.coerce.number().int().positive().default(587),
     SMTP_SECURE: z

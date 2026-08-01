@@ -16,7 +16,11 @@ import { successResponse } from '../utils/apiResponse.js';
 const COOKIE_NAME = 'duothan_refresh';
 
 function metadata(req) {
-  return { ip: req.ip, userAgent: req.get('user-agent') || '' };
+  return {
+    ip: req.ip,
+    userAgent: req.get('user-agent') || '',
+    deviceToken: req.cookies[env.DEVICE_COOKIE_NAME],
+  };
 }
 
 function setRefreshCookie(res, token) {
@@ -62,6 +66,14 @@ export async function resend(req, res) {
 export async function login(req, res) {
   const result = await loginUser(req.body.email, req.body.password, metadata(req));
   setRefreshCookie(res, result.refreshToken);
+  if (result.deviceToken)
+    res.cookie(env.DEVICE_COOKIE_NAME, result.deviceToken, {
+      httpOnly: true,
+      secure: env.NODE_ENV === 'production',
+      sameSite: env.NODE_ENV === 'production' ? 'none' : 'lax',
+      path: '/',
+      maxAge: env.DEVICE_TRUST_DAYS * 86400000,
+    });
   return successResponse(res, {
     message: 'Login successful',
     data: { accessToken: result.accessToken, user: result.user },
