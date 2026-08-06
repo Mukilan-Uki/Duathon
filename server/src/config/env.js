@@ -1,12 +1,28 @@
 import 'dotenv/config';
 import { z } from 'zod';
 
+// CLIENT_URL accepts one origin or a comma-separated list. The first entry is the canonical
+// client URL used to build links in emails; every entry is allowed through CORS.
+const splitOrigins = (value) =>
+  (value || '')
+    .split(',')
+    .map((origin) => origin.trim().replace(/\/+$/, ''))
+    .filter(Boolean);
+
 const result = z
   .object({
     NODE_ENV: z.enum(['development', 'test', 'production']),
     PORT: z.coerce.number().int().positive().default(5000),
     MONGODB_URI: z.string().optional().default(''),
-    CLIENT_URL: z.string().url().default('http://localhost:5173'),
+    CLIENT_URL: z
+      .string()
+      .default('http://localhost:5173')
+      .refine(
+        (value) =>
+          splitOrigins(value).length > 0 &&
+          splitOrigins(value).every((origin) => URL.canParse(origin)),
+        { message: 'CLIENT_URL must be a comma-separated list of absolute URLs' },
+      ),
     JWT_ACCESS_SECRET: z.string().min(32).default('development-access-secret-change-me-now'),
     JWT_REFRESH_SECRET: z.string().min(32).default('development-refresh-secret-change-me-now'),
     JWT_ACCESS_EXPIRES_IN: z.string().default('15m'),
@@ -53,7 +69,9 @@ if (!result.success) {
   );
 }
 
-export const env = result.data;
+export const clientOrigins = splitOrigins(result.data.CLIENT_URL);
+
+export const env = { ...result.data, CLIENT_URL: clientOrigins[0] };
 
 if (env.TRANSFER_MIN_MINOR > env.TRANSFER_MAX_MINOR) {
   throw new Error('TRANSFER_MIN_MINOR cannot exceed TRANSFER_MAX_MINOR');
@@ -89,7 +107,7 @@ if (env.NODE_ENV === 'production' && !env.MONGODB_URI) {
   throw new Error('Production requires MONGODB_URI');
 }
 
-if (env.NODE_ENV === 'production' && !env.CLIENT_URL.startsWith('https://')) {
+if (env.NODE_ENV === 'production' && !clientOrigins.every((o) => o.startsWith('https://'))) {
   throw new Error('Production CLIENT_URL must use HTTPS');
 }
 

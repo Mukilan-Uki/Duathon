@@ -224,24 +224,31 @@ That makes it a strong end-to-end development project.
 ## 15. Questions they might ask and how to answer them
 
 ### Q: What is the purpose of this project?
+
 A: To build a secure digital banking platform that demonstrates real-world financial workflows, user roles, and strong backend logic.
 
 ### Q: Why is this useful?
+
 A: Because it shows how banking systems must handle security, permissions, financial operations, and audits in a realistic way.
 
 ### Q: What makes it different from other projects?
+
 A: It includes role-based access, financial transaction safety, family banking, junior banking, and admin monitoring features.
 
 ### Q: How did you make it secure?
+
 A: By implementing authentication, password hashing, authorization rules, validation, and secure transaction logic on the server side.
 
 ### Q: What was the hardest part?
+
 A: Implementing business rules and backend safety for money movement and permissions.
 
 ### Q: Did you deploy it?
+
 A: The project is structured for deployment, and deployment configuration is included, but the live deployment status depends on environment setup and provider configuration.
 
 ### Q: Why did you choose this stack?
+
 A: React and Node.js are modern, widely used, and suitable for building a full-stack application quickly while keeping the architecture clean.
 
 ---

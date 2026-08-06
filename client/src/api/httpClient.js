@@ -1,7 +1,16 @@
 import axios from 'axios';
 import { tokenStore } from '../services/tokenStore';
 
-const baseURL = import.meta.env.VITE_API_URL || '/api';
+// VITE_API_URL is expected to point at the API root (e.g. https://host/api). Deployments
+// frequently set it to the bare host, which would send every request to a 404 path, so the
+// /api suffix is normalised here rather than depending on the dashboard value being exact.
+const normaliseBaseUrl = (value) => {
+  const trimmed = (value || '').trim().replace(/\/+$/, '');
+  if (!trimmed) return '/api';
+  return /\/api(\/v\d+)?$/.test(trimmed) ? trimmed : `${trimmed}/api`;
+};
+
+const baseURL = normaliseBaseUrl(import.meta.env.VITE_API_URL);
 const httpClient = axios.create({
   baseURL,
   timeout: 1000000,

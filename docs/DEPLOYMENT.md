@@ -61,11 +61,11 @@ Review optional limits and loan-rate variables in `server/.env.example`. Do not 
 
 Additional variables introduced in Phase 03:
 
-| Variable      | Production value                                                        |
-| ------------- | ------------------------------------------------------------------------ |
-| `OTP_HASH_SECRET` | Fourth distinct cryptographically random secret (separate from JWT secrets) |
-| `LOG_LEVEL`   | `info` (structured JSON via pino; `debug` for troubleshooting only)      |
-| `REDIS_URL`   | Managed Redis connection string; rate limiting falls back to in-memory per-instance limits if unset, which does not hold under >1 replica |
+| Variable          | Production value                                                                                                                          |
+| ----------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
+| `OTP_HASH_SECRET` | Fourth distinct cryptographically random secret (separate from JWT secrets)                                                               |
+| `LOG_LEVEL`       | `info` (structured JSON via pino; `debug` for troubleshooting only)                                                                       |
+| `REDIS_URL`       | Managed Redis connection string; rate limiting falls back to in-memory per-instance limits if unset, which does not hold under >1 replica |
 
 Render's free-tier web service builds from source (`buildCommand`/`startCommand` in `render.yaml`); the CI-built container images published to GHCR (see §5) are for any environment that deploys from an image registry instead (e.g. a VPS, ECS, or a paid Render/Fly.io service). Add `LOG_LEVEL` and `REDIS_URL` alongside the required variables above.
 
