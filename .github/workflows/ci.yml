@@ -51,7 +51,7 @@ jobs:
       - uses: docker/setup-buildx-action@v3
 
       - name: Build server image
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v7
         with:
           context: .
           file: server/Dockerfile
@@ -59,7 +59,7 @@ jobs:
           tags: duothan-api:ci
 
       - name: Build client image
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v7
         with:
           context: .
           file: client/Dockerfile
