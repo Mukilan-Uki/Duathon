@@ -12,7 +12,7 @@ export async function authenticate(req, _res, next) {
     if (!mongoose.isValidObjectId(payload.sub)) throw new AppError('Invalid access token', 401);
 
     const user = await User.findById(payload.sub).select('+passwordChangedAt');
-    if (!user || (user.status || user.accountStatus) !== 'active') {
+    if (!user || (user.accountStatus || user.status) !== 'active') {
       throw new AppError('Invalid access token', 401);
     }
     if (user.passwordChangedAt && payload.iat * 1000 < user.passwordChangedAt.getTime() - 1000) {

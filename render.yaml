@@ -22,6 +22,8 @@ services:
         generateValue: true
       - key: DEVICE_TOKEN_SECRET
         generateValue: true
+      - key: OTP_HASH_SECRET
+        generateValue: true
       - key: DEVICE_COOKIE_NAME
         value: duothan_device
       - key: DEVICE_TRUST_DAYS

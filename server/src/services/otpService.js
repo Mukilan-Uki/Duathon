@@ -25,7 +25,7 @@ export async function issueOtp(user, purpose) {
   await OTP.create({
     user: user._id,
     purpose,
-    codeHash: hashOtp(code, env.JWT_ACCESS_SECRET),
+    codeHash: hashOtp(code, env.OTP_HASH_SECRET),
     expiresAt: new Date(Date.now() + env.OTP_EXPIRES_MINUTES * 60 * 1000),
     resendCount: withinWindow ? latest.resendCount + 1 : 1,
     resendWindowStartedAt: withinWindow ? latest.resendWindowStartedAt : new Date(),
@@ -53,7 +53,7 @@ export async function consumeOtp(userId, purpose, code) {
     throw new AppError('The security code is invalid or has expired', 400);
   }
 
-  const matches = timingSafeEqualHex(hashOtp(code, env.JWT_ACCESS_SECRET), record.codeHash);
+  const matches = timingSafeEqualHex(hashOtp(code, env.OTP_HASH_SECRET), record.codeHash);
 
   if (!matches) {
     record.attempts += 1;

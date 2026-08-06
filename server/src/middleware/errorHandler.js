@@ -1,6 +1,6 @@
 import { env } from '../config/env.js';
 
-export function errorHandler(error, _req, res, _next) {
+export function errorHandler(error, req, res, _next) {
   const duplicate = error?.code === 11000;
   const malformedJson = error instanceof SyntaxError && error.status === 400 && 'body' in error;
   const validation = error?.name === 'ValidationError';
@@ -21,7 +21,18 @@ export function errorHandler(error, _req, res, _next) {
           : error.isOperational
             ? error.message
             : 'An unexpected error occurred';
-  if (env.NODE_ENV !== 'test') console.error(error);
+  if (env.NODE_ENV !== 'test') {
+    if (env.NODE_ENV === 'production') {
+      console.error({
+        message: error.message,
+        statusCode,
+        name: error.name,
+        path: req.originalUrl?.split('?')[0],
+      });
+    } else {
+      console.error(error);
+    }
+  }
   const errors = validation
     ? Object.values(error.errors).map((item) => ({
         field: item.path,

@@ -4,7 +4,7 @@ import { tokenStore } from '../services/tokenStore';
 const baseURL = import.meta.env.VITE_API_URL || '/api';
 const httpClient = axios.create({
   baseURL,
-  timeout: 10000,
+  timeout: 1000000,
   withCredentials: true,
   headers: { Accept: 'application/json' },
 });

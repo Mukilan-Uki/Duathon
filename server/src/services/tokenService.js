@@ -66,7 +66,7 @@ export async function rotateRefreshToken(rawToken, metadata) {
   if (stored.expiresAt <= new Date()) throw new AppError('Session expired', 401);
 
   const user = await User.findById(stored.user);
-  if (!user || (user.status || user.accountStatus) !== 'active') {
+  if (!user || (user.accountStatus || user.status) !== 'active') {
     throw new AppError('Invalid session', 401);
   }
 

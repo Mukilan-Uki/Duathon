@@ -7,7 +7,14 @@ const loginHistorySchema = new mongoose.Schema(
     successful: { type: Boolean, required: true, index: true },
     reason: {
       type: String,
-      enum: ['success', 'invalid_credentials', 'locked', 'suspended', 'unverified'],
+      enum: [
+        'success',
+        'invalid_credentials',
+        'locked',
+        'suspended',
+        'unverified',
+        'device_revoked',
+      ],
       required: true,
     },
     ipAddress: { type: String, default: '' },

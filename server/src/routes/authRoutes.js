@@ -50,13 +50,20 @@ const registrationLimiter = rateLimit({
   legacyHeaders: false,
   message: { success: false, message: 'Too many registrations. Try again later', errors: [] },
 });
+const sessionLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  limit: 30,
+  standardHeaders: 'draft-7',
+  legacyHeaders: false,
+  message: { success: false, message: 'Too many requests. Try again later', errors: [] },
+});
 
 router.post('/register', registrationLimiter, validate(registerSchema), asyncHandler(register));
 router.post('/verify-email', recoveryLimiter, validate(verifyEmailSchema), asyncHandler(verify));
 router.post('/resend-verification', recoveryLimiter, validate(emailSchema), asyncHandler(resend));
 router.post('/login', loginLimiter, validate(loginSchema), asyncHandler(login));
-router.post('/refresh', requireTrustedOrigin, asyncHandler(refresh));
-router.post('/logout', requireTrustedOrigin, asyncHandler(logout));
+router.post('/refresh', sessionLimiter, requireTrustedOrigin, asyncHandler(refresh));
+router.post('/logout', sessionLimiter, requireTrustedOrigin, asyncHandler(logout));
 router.post(
   '/forgot-password',
   recoveryLimiter,

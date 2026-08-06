@@ -3,7 +3,7 @@ import { z } from 'zod';
 
 const result = z
   .object({
-    NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
+    NODE_ENV: z.enum(['development', 'test', 'production']),
     PORT: z.coerce.number().int().positive().default(5000),
     MONGODB_URI: z.string().optional().default(''),
     CLIENT_URL: z.string().url().default('http://localhost:5173'),
@@ -19,6 +19,7 @@ const result = z
     FAMILY_INVITATION_EXPIRES_DAYS: z.coerce.number().int().positive().max(30).default(7),
     ADULT_MIN_AGE: z.coerce.number().int().min(18).max(25).default(18),
     DEVICE_TOKEN_SECRET: z.string().min(32).default('development-device-secret-change-me-now'),
+    OTP_HASH_SECRET: z.string().min(32).default('development-otp-secret-change-me-now'),
     DEVICE_COOKIE_NAME: z.string().min(3).default('duothan_device'),
     DEVICE_TRUST_DAYS: z.coerce.number().int().positive().max(365).default(90),
     SMTP_HOST: z.string().optional().default(''),
@@ -71,11 +72,15 @@ if (
 if (
   env.NODE_ENV === 'production' &&
   (env.DEVICE_TOKEN_SECRET.includes('development-') ||
-    env.DEVICE_TOKEN_SECRET === env.JWT_ACCESS_SECRET ||
-    env.DEVICE_TOKEN_SECRET === env.JWT_REFRESH_SECRET ||
-    env.JWT_ACCESS_SECRET === env.JWT_REFRESH_SECRET)
+    env.OTP_HASH_SECRET.includes('development-') ||
+    new Set([
+      env.JWT_ACCESS_SECRET,
+      env.JWT_REFRESH_SECRET,
+      env.DEVICE_TOKEN_SECRET,
+      env.OTP_HASH_SECRET,
+    ]).size !== 4)
 ) {
-  throw new Error('Production requires three distinct authentication and device secrets');
+  throw new Error('Production requires four distinct authentication, device, and OTP secrets');
 }
 
 if (env.NODE_ENV === 'production' && !env.MONGODB_URI) {

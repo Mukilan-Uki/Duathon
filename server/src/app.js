@@ -21,7 +21,16 @@ app.use(express.json({ limit: '10kb' }));
 app.use(express.urlencoded({ extended: false, limit: '10kb' }));
 app.use(mongoSanitize());
 app.use(hpp());
-if (env.NODE_ENV !== 'test') app.use(morgan(env.NODE_ENV === 'production' ? 'combined' : 'dev'));
+morgan.token('safe-url', (req) => req.originalUrl.split('?')[0]);
+if (env.NODE_ENV !== 'test') {
+  app.use(
+    morgan(
+      env.NODE_ENV === 'production'
+        ? ':remote-addr - :method :safe-url HTTP/:http-version :status :res[content-length] - :response-time ms'
+        : 'dev',
+    ),
+  );
+}
 app.use(
   '/api',
   rateLimit({

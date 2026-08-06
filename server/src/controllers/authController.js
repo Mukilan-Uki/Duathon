@@ -68,6 +68,7 @@ export async function verify(req, res) {
 }
 
 export async function resend(req, res) {
+  // Propagates 429 for real over-limit accounts; unknown/verified emails still get 200 above.
   await resendVerification(req.body.email);
   return successResponse(res, {
     message: 'If the account requires verification, a new code has been sent',

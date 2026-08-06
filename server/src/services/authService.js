@@ -180,11 +180,7 @@ export async function verifyEmail(email, code) {
 export async function resendVerification(email) {
   const user = await User.findOne({ email: email.toLowerCase() });
   if (user && !user.isEmailVerified) {
-    try {
-      await issueOtp(user, 'email_verification');
-    } catch (error) {
-      if (error.statusCode !== 429) throw error;
-    }
+    await issueOtp(user, 'email_verification');
   }
 }
 
@@ -281,6 +277,10 @@ export async function loginUser(emailInput, password, metadata) {
   user.isJunior = Boolean(await JuniorProfile.exists({ juniorUser: user._id, status: { $ne: 'closed' } }));
   await user.save();
   const observation = await observeLoginDevice(user, metadata.deviceToken, metadata);
+  if (['revoked', 'blocked'].includes(observation.device.status)) {
+    await recordLogin(user, email, false, 'device_revoked', metadata, observation);
+    throw new AppError('This device is no longer trusted. Contact support to regain access', 403);
+  }
   await recordLogin(user, email, true, 'success', metadata, observation);
   return {
     user,
@@ -295,6 +295,20 @@ export async function requestPasswordReset(email, metadata = {}) {
     accountStatus: { $ne: 'suspended' },
   });
   if (!user) return;
+
+  const recentResetRequests = await PasswordResetToken.countDocuments({
+    user: user._id,
+    createdAt: { $gte: new Date(Date.now() - 60 * 60 * 1000) },
+  });
+  if (recentResetRequests >= 3) {
+    await recordSecuritySignal({
+      userId: user._id,
+      category: 'password_reset',
+      reason: 'Multiple password reset requests were detected within one hour.',
+    });
+    return;
+  }
+
   await PasswordResetToken.updateMany(
     { user: user._id, usedAt: null },
     { $set: { usedAt: new Date() } },
@@ -306,18 +320,7 @@ export async function requestPasswordReset(email, metadata = {}) {
     expiresAt: new Date(Date.now() + env.PASSWORD_RESET_EXPIRES_MINUTES * 60 * 1000),
     createdByIp: metadata.ip || '',
   });
-  const recentResetRequests = await PasswordResetToken.countDocuments({
-    user: user._id,
-    createdAt: { $gte: new Date(Date.now() - 60 * 60 * 1000) },
-  });
-  if (recentResetRequests >= 3) {
-    await recordSecuritySignal({
-      userId: user._id,
-      category: 'password_reset',
-      reason: 'Multiple password reset requests were detected within one hour.',
-    });
-  }
-  await sendPasswordResetEmail({ to: user.email, name: user.firstName, token });
+  sendPasswordResetEmail({ to: user.email, name: user.firstName, token }).catch(() => {});
 }
 
 export async function resetPassword(token, password) {
