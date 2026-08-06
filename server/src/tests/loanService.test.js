@@ -7,6 +7,7 @@ const mocks = vi.hoisted(() => ({
   applicationExists: vi.fn(),
   applicationCreate: vi.fn(),
   applicationFindById: vi.fn(),
+  applicationFindOne: vi.fn(),
   loanCreate: vi.fn(),
   loanFindOne: vi.fn(),
   loanFindOneAndUpdate: vi.fn(),
@@ -31,6 +32,7 @@ vi.mock('../models/LoanApplication.js', () => ({
     exists: mocks.applicationExists,
     create: mocks.applicationCreate,
     findById: mocks.applicationFindById,
+    findOne: mocks.applicationFindOne,
   },
 }));
 vi.mock('../models/Loan.js', () => ({
@@ -127,6 +129,7 @@ describe('loan review', () => {
     mocks.loanCreate.mockImplementation(async (records) => [
       { _id: '507f1f77bcf86cd799439020', ...records[0] },
     ]);
+    mocks.applicationFindOne.mockReturnValue(queryResult(null));
   });
 
   it('approves, disburses, records the loan, and audits in one transaction', async () => {
@@ -156,6 +159,7 @@ describe('loan review', () => {
       reviewer,
       { decision: 'approve', reviewNote: 'Affordability checks passed' },
       metadata,
+      'loan-review-key-1',
     );
 
     expect(result.loan.totalRepayableMinor).toBe(134400);
@@ -182,6 +186,7 @@ describe('loan review', () => {
       reviewer,
       { decision: 'reject', reviewNote: 'Insufficient affordability evidence' },
       metadata,
+      'loan-review-key-2',
     );
     expect(application.status).toBe('rejected');
     expect(mocks.accountFindOneAndUpdate).not.toHaveBeenCalled();

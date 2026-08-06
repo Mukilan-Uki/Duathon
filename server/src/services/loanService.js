@@ -90,9 +90,112 @@ export function listReviewableLoanApplications(status) {
     .sort({ status: 1, createdAt: 1 });
 }
 
-export async function reviewLoanApplication(applicationId, reviewer, input, metadata) {
+function reviewFingerprint(reviewerId, applicationId, input) {
+  return crypto
+    .createHash('sha256')
+    .update(
+      JSON.stringify({
+        reviewerId: reviewerId.toString(),
+        applicationId,
+        decision: input.decision,
+        reviewNote: input.reviewNote,
+      }),
+    )
+    .digest('hex');
+}
+
+async function findReviewedApplication(reviewerId, applicationId, key, fingerprint, session) {
+  const query = LoanApplication.findOne({
+    _id: applicationId,
+    reviewedBy: reviewerId,
+    reviewIdempotencyKey: key,
+  }).select('+reviewIdempotencyKey +reviewRequestHash');
+  if (session) query.session(session);
+  const application = await query;
+  if (application && application.reviewRequestHash !== fingerprint) {
+    throw new AppError('This idempotency key was already used for another request', 409);
+  }
+  return application;
+}
+
+export async function reviewLoanApplication(
+  applicationId,
+  reviewer,
+  input,
+  metadata,
+  idempotencyKey,
+) {
+  const fingerprint = reviewFingerprint(reviewer._id, applicationId, input);
+  const existing = await findReviewedApplication(
+    reviewer._id,
+    applicationId,
+    idempotencyKey,
+    fingerprint,
+  );
+  if (existing) {
+    return {
+      application: existing,
+      loan: existing.approvedLoan ? await Loan.findById(existing.approvedLoan) : null,
+      duplicate: true,
+    };
+  }
+
+  try {
+    return await runReviewTransaction(
+      applicationId,
+      reviewer,
+      input,
+      metadata,
+      idempotencyKey,
+      fingerprint,
+    );
+  } catch (error) {
+    if (error?.code === 11000) {
+      const duplicate = await findReviewedApplication(
+        reviewer._id,
+        applicationId,
+        idempotencyKey,
+        fingerprint,
+      );
+      if (duplicate) {
+        return {
+          application: duplicate,
+          loan: duplicate.approvedLoan ? await Loan.findById(duplicate.approvedLoan) : null,
+          duplicate: true,
+        };
+      }
+    }
+    throw error;
+  }
+}
+
+async function runReviewTransaction(
+  applicationId,
+  reviewer,
+  input,
+  metadata,
+  idempotencyKey,
+  fingerprint,
+) {
   return mongoose.connection.transaction(
     async (session) => {
+      const inside = await findReviewedApplication(
+        reviewer._id,
+        applicationId,
+        idempotencyKey,
+        fingerprint,
+        session,
+      );
+      if (inside) {
+        return {
+          application: inside,
+          loan: inside.approvedLoan
+            ? await Loan.findById(inside.approvedLoan).session(session)
+            : null,
+          duplicate: true,
+        };
+      }
+
       const application = await LoanApplication.findById(applicationId).session(session);
       if (!application) throw new AppError('Loan application not found', 404);
       if (application.status !== 'pending') {
@@ -105,6 +208,8 @@ export async function reviewLoanApplication(applicationId, reviewer, input, meta
       application.reviewNote = input.reviewNote;
       application.reviewedBy = reviewer._id;
       application.reviewedAt = now;
+      application.reviewIdempotencyKey = idempotencyKey;
+      application.reviewRequestHash = fingerprint;
 
       if (input.decision === 'reject') {
         await application.save({ session });
@@ -129,7 +234,7 @@ export async function reviewLoanApplication(applicationId, reviewer, input, meta
           },
           session,
         );
-        return { application, loan: null };
+        return { application, loan: null, duplicate: false };
       }
 
       const account = await Account.findOne({
@@ -233,7 +338,7 @@ export async function reviewLoanApplication(applicationId, reviewer, input, meta
         },
         session,
       );
-      return { application, loan };
+      return { application, loan, duplicate: false };
     },
     { readConcern: { level: 'snapshot' }, writeConcern: { w: 'majority' } },
   );

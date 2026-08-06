@@ -40,6 +40,7 @@ router.get(
 router.patch(
   '/applications/:applicationId/review',
   authorize('employee', 'admin'),
+  requireIdempotencyKey,
   validate(reviewLoanSchema),
   asyncHandler(review),
 );

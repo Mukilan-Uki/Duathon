@@ -441,6 +441,16 @@ export async function updateMember(familyId, memberId, actor, input, metadata) {
     if (member.role === 'junior_member' || input.role === 'junior_member') {
       throw new AppError('Junior roles must use Junior Banking workflows', 409);
     }
+    if (member.role === 'family_admin' && input.role !== 'family_admin') {
+      const anotherAdmin = family.members.some(
+        (candidate) =>
+          candidate._id.toString() !== memberId &&
+          candidate.status === 'active' &&
+          candidate.role === 'family_admin',
+      );
+      if (!anotherAdmin)
+        throw new AppError('Assign another family administrator before changing this role', 409);
+    }
     member.role = input.role;
   }
   if (input.permissions) Object.assign(member.permissions, input.permissions);

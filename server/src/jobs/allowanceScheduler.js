@@ -9,9 +9,7 @@ const FREQUENCY_STEP_MS = {
 };
 
 async function runDueAllowance(allowance) {
-  const destination = await Account.findById(allowance.destinationAccount).select(
-    '+accountNumber',
-  );
+  const destination = await Account.findById(allowance.destinationAccount).select('+accountNumber');
   if (!destination) {
     allowance.status = 'failed';
     allowance.failureReason = 'Destination account not found';
@@ -33,22 +31,30 @@ async function runDueAllowance(allowance) {
       { ip: 'internal-scheduler', userAgent: 'allowance-scheduler', method: 'JOB' },
       { allowJunior: true },
     );
-
-    allowance.lastRunAt = new Date();
-    allowance.lastIdempotencyKey = idempotencyKey;
-    if (allowance.frequency === 'one_time') {
-      allowance.status = 'completed';
-    } else {
-      allowance.nextRunAt = new Date(
-        allowance.nextRunAt.getTime() + FREQUENCY_STEP_MS[allowance.frequency],
-      );
-    }
-    await allowance.save();
   } catch (error) {
     allowance.status = 'failed';
     allowance.failureReason = error instanceof Error ? error.message : 'Allowance transfer failed';
     await allowance.save();
     logger.error({ allowanceId: allowance._id.toString(), err: error }, 'Allowance run failed');
+    return;
+  }
+
+  allowance.lastRunAt = new Date();
+  allowance.lastIdempotencyKey = idempotencyKey;
+  if (allowance.frequency === 'one_time') {
+    allowance.status = 'completed';
+  } else {
+    allowance.nextRunAt = new Date(
+      allowance.nextRunAt.getTime() + FREQUENCY_STEP_MS[allowance.frequency],
+    );
+  }
+  try {
+    await allowance.save();
+  } catch (error) {
+    logger.error(
+      { allowanceId: allowance._id.toString(), idempotencyKey, err: error },
+      'Allowance transfer succeeded but recording the run failed; investigate before this allowance runs again',
+    );
   }
 }
 

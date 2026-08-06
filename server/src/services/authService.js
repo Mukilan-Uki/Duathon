@@ -49,7 +49,10 @@ async function uniqueFamilyCode() {
 async function ensureJuniorOnboarding(user, input) {
   if (!isMinor(input.dateOfBirth)) return false;
 
-  const existingProfile = await JuniorProfile.findOne({ juniorUser: user._id, status: { $ne: 'closed' } });
+  const existingProfile = await JuniorProfile.findOne({
+    juniorUser: user._id,
+    status: { $ne: 'closed' },
+  });
   if (existingProfile) {
     user.isJunior = true;
     await user.save();
@@ -172,7 +175,9 @@ export async function verifyEmail(email, code) {
   user.isEmailVerified = true;
   user.accountStatus = 'active';
   await user.save();
-  user.isJunior = Boolean(await JuniorProfile.exists({ juniorUser: user._id, status: { $ne: 'closed' } }));
+  user.isJunior = Boolean(
+    await JuniorProfile.exists({ juniorUser: user._id, status: { $ne: 'closed' } }),
+  );
   await user.save();
   return user;
 }
@@ -274,7 +279,9 @@ export async function loginUser(emailInput, password, metadata) {
   user.lockUntil = null;
   user.lastLoginAt = new Date();
   await user.save();
-  user.isJunior = Boolean(await JuniorProfile.exists({ juniorUser: user._id, status: { $ne: 'closed' } }));
+  user.isJunior = Boolean(
+    await JuniorProfile.exists({ juniorUser: user._id, status: { $ne: 'closed' } }),
+  );
   await user.save();
   const observation = await observeLoginDevice(user, metadata.deviceToken, metadata);
   if (['revoked', 'blocked'].includes(observation.device.status)) {
@@ -366,5 +373,9 @@ export async function changePassword(userId, currentPassword, newPassword) {
   user.password = newPassword;
   user.passwordChangedAt = new Date();
   await user.save();
+  await RefreshToken.updateMany(
+    { user: user._id, revokedAt: null },
+    { $set: { revokedAt: new Date() } },
+  );
   return user;
 }

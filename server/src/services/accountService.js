@@ -2,13 +2,14 @@ import Account from '../models/Account.js';
 import Transaction from '../models/Transaction.js';
 import { AppError } from '../utils/AppError.js';
 import { generateUniqueAccountNumber } from '../utils/accountNumber.js';
+import { maskAccountNumber } from '../utils/masking.js';
 import { createAuditLog } from './auditService.js';
 import { createNotification } from './notificationService.js';
 
 const LEGACY_DEFAULT_BRANCH_CODE = 'CMB01';
 
 function maskedNumber(value) {
-  return value ? `•••• •••• ${value.slice(-4)}` : 'Pending approval';
+  return value ? maskAccountNumber(value) : 'Pending approval';
 }
 
 export function presentAccount(account, viewerRole = 'customer', includeFullNumber = false) {
@@ -29,7 +30,7 @@ export function presentAccount(account, viewerRole = 'customer', includeFullNumb
     createdAt: value.createdAt,
     approvedAt: value.approvedAt,
   };
-  if (includeFullNumber && fullNumber) safe.accountNumber = fullNumber;
+  if (includeFullNumber && viewerRole === 'customer' && fullNumber) safe.accountNumber = fullNumber;
   if (viewerRole !== 'customer') {
     safe.approvedBy = value.approvedBy;
     safe.suspendedBy = value.suspendedBy;

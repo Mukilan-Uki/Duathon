@@ -38,10 +38,12 @@ export async function review(req, res) {
     req.user,
     req.body,
     metadata(req),
+    req.idempotencyKey,
   );
   return successResponse(res, {
-    message:
-      req.body.decision === 'approve'
+    message: result.duplicate
+      ? 'This review was already recorded'
+      : req.body.decision === 'approve'
         ? 'Loan approved and disbursed successfully'
         : 'Loan application rejected',
     data: result,

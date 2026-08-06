@@ -79,7 +79,9 @@ export async function rotateRefreshToken(rawToken, metadata) {
   stored.revokedByIp = metadata.ip;
   stored.replacedByToken = hashToken(next.refreshToken);
   await stored.save();
-  user.isJunior = Boolean(await JuniorProfile.exists({ juniorUser: user._id, status: { $ne: 'closed' } }));
+  user.isJunior = Boolean(
+    await JuniorProfile.exists({ juniorUser: user._id, status: { $ne: 'closed' } }),
+  );
   await user.save();
   return { ...next, user };
 }

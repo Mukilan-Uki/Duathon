@@ -34,6 +34,16 @@ function periodStart(days, now = new Date()) {
   return new Date(now.getTime() - days * 24 * 60 * 60 * 1000);
 }
 
+async function requireApprovedBeneficiary(profileId, beneficiaryId) {
+  if (!beneficiaryId) throw new AppError('An approved beneficiary is required', 403);
+  const approved = await JuniorBeneficiaryPermission.exists({
+    juniorProfile: profileId,
+    beneficiary: beneficiaryId,
+    status: 'approved',
+  });
+  if (!approved) throw new AppError('This beneficiary has not been approved for the junior', 403);
+}
+
 async function enforceSpendingLimits(profile, amountMinor) {
   const limits = [
     ['dailyLimitMinor', periodStart(1)],
@@ -287,6 +297,7 @@ export async function requestTransaction(actor, input, key) {
     (profile.approvalSettings.requireApprovalAboveMinor > 0 &&
       input.amountMinor > profile.approvalSettings.requireApprovalAboveMinor);
   if (!requiresApproval && input.receiverAccountId) {
+    await requireApprovedBeneficiary(profile._id, input.beneficiaryId);
     const receiver = await Account.findById(input.receiverAccountId).select('+accountNumber');
     if (!receiver) throw new AppError('Receiver account not found', 404);
     const result = await transferMoney(
@@ -331,6 +342,7 @@ export async function reviewRequest(actor, requestId, decision, reason, metadata
     throw new AppError('Transaction request expired', 409);
   }
   if (decision === 'approve') {
+    await requireApprovedBeneficiary(request.juniorProfile._id, request.beneficiary);
     const [account, receiver] = await Promise.all([
       Account.findOne({
         _id: request.juniorAccount,

@@ -44,10 +44,16 @@ const loanApplicationSchema = new mongoose.Schema(
     reviewedAt: { type: Date, default: null },
     reviewNote: { type: String, trim: true, maxlength: 500, default: '' },
     approvedLoan: { type: mongoose.Schema.Types.ObjectId, ref: 'Loan', default: null },
+    reviewIdempotencyKey: { type: String, default: null, select: false },
+    reviewRequestHash: { type: String, default: null, select: false },
   },
   { timestamps: true },
 );
 
 loanApplicationSchema.index({ applicant: 1, createdAt: -1 });
+loanApplicationSchema.index(
+  { reviewedBy: 1, reviewIdempotencyKey: 1 },
+  { unique: true, partialFilterExpression: { reviewIdempotencyKey: { $type: 'string' } } },
+);
 
 export default mongoose.model('LoanApplication', loanApplicationSchema);

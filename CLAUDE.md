@@ -39,7 +39,7 @@ Route → rate limiter → authenticate → authorize → validate → asyncHand
 ```
 
 - **Controllers are thin.** They translate HTTP only (see `server/src/controllers/transactionController.js`). All business rules, authorization-beyond-role, and ownership checks live in services.
-- **`validate(schema)`** (`middleware/validate.js`) parses `{ body, params, query }` as one Zod object and *replaces* `req.body/params/query` with the parsed output. Validator schemas therefore nest under those keys, and `issue.path.slice(1)` strips the wrapper for error fields.
+- **`validate(schema)`** (`middleware/validate.js`) parses `{ body, params, query }` as one Zod object and _replaces_ `req.body/params/query` with the parsed output. Validator schemas therefore nest under those keys, and `issue.path.slice(1)` strips the wrapper for error fields.
 - **Errors**: throw `AppError(message, statusCode, errors?)`; wrap async controllers in `asyncHandler`. Success responses always go through `successResponse(res, {statusCode, message, data})` → `{ success, message, data }`.
 - **Roles** are only `customer | employee | admin` (`models/User.js`). `authorize(...roles)` gates the role; the service must still verify resource ownership (queries include `owner: userId` in the predicate, e.g. `Account.findOne({ _id, owner: userId })`).
 
@@ -50,7 +50,7 @@ Client mirrors this: `pages/` (role-foldered) → `services/*Service.js` → `ap
 - **All amounts are integer minor units** (`*Minor` fields, LKR cents). Never floats. Model validators enforce `Number.isSafeInteger`. Client converts at the edge only: `utils/money.js` (`parseMajorUnitsToMinor` uses BigInt, `formatMinorUnits` divides by 100).
 - **Every financial write runs inside `mongoose.connection.transaction(fn, { readConcern: { level: 'snapshot' }, writeConcern: { w: 'majority' } })`** — debit, credit, transaction record, audit log, and notifications all share the one `session`. Pass `session` down to every helper (`createAuditLog`, `createNotification`, `flagAutomaticTransaction`).
 - **Debits are conditional, never read-then-write.** `Account.findOneAndUpdate` includes `status: 'active'`, `availableBalanceMinor: { $gte: amount }`, and `ledgerBalanceMinor: { $gte: amount }` in the filter; a null result means insufficient funds. This is what prevents concurrent overdraw — do not replace it with a fetch-check-save.
-- **Idempotency is mandatory on money-moving endpoints.** `requireIdempotencyKey` accepts an `Idempotency-Key` header *or* `body.idempotencyKey` (8–128 chars of `[A-Za-z0-9_-]`). The service hashes the request into a `requestHash` fingerprint; a replayed key with a different fingerprint is a 409, a matching one returns the original result with `duplicate: true` (HTTP 200 instead of 201). A duplicate-key error (`11000`) from a concurrent race falls back to `waitForConcurrentIdempotentResult`.
+- **Idempotency is mandatory on money-moving endpoints.** `requireIdempotencyKey` accepts an `Idempotency-Key` header _or_ `body.idempotencyKey` (8–128 chars of `[A-Za-z0-9_-]`). The service hashes the request into a `requestHash` fingerprint; a replayed key with a different fingerprint is a 409, a matching one returns the original result with `duplicate: true` (HTTP 200 instead of 201). A duplicate-key error (`11000`) from a concurrent race falls back to `waitForConcurrentIdempotentResult`.
 - **Financial records are never deleted.** Reversals create a new linked `reversal` transaction (`reversalOf`) and mark the original `reversed`; failures write a `failed` transaction row. Loan decisions are historical.
 
 `transactionService.js` is the reference implementation for all of the above — read it before writing any new money flow, and reuse `transferMoney` rather than reimplementing (junior banking approvals call into it with `options.allowJunior`).
@@ -68,9 +68,9 @@ Layered defenses in `app.js`: helmet, CORS pinned to `CLIENT_URL` with credentia
 
 ## Testing conventions
 
-Server API tests mock the service boundary and `authenticate` (injecting `req.user` with a role from an `x-test-role` header), then `await import('../app.js')` *after* the `vi.mock` calls — ESM hoisting requires this order. They assert authorization, validation, ownership, and duplicate-request behavior rather than hitting the DB. Service/model tests are focused units. Integration paths that exercise real transactions need a replica set or Atlas.
+Server API tests mock the service boundary and `authenticate` (injecting `req.user` with a role from an `x-test-role` header), then `await import('../app.js')` _after_ the `vi.mock` calls — ESM hoisting requires this order. They assert authorization, validation, ownership, and duplicate-request behavior rather than hitting the DB. Service/model tests are focused units. Integration paths that exercise real transactions need a replica set or Atlas.
 
-When changing behavior, add tests for success, validation, authorization, ownership, *and* duplicate requests (per `docs/CONTRIBUTING.md`), and update the relevant doc in `docs/`.
+When changing behavior, add tests for success, validation, authorization, ownership, _and_ duplicate requests (per `docs/CONTRIBUTING.md`), and update the relevant doc in `docs/`.
 
 ## Conventions
 
