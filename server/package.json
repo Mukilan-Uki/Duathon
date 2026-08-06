@@ -18,7 +18,7 @@
     "dotenv": "^16.4.7",
     "express": "^4.21.2",
     "express-mongo-sanitize": "^2.2.0",
-    "express-rate-limit": "^7.5.0",
+    "express-rate-limit": "^8.6.1",
     "helmet": "^8.0.0",
     "hpp": "^0.2.3",
     "ioredis": "^6.0.0",
