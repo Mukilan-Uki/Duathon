@@ -10,7 +10,7 @@ ENV VITE_API_URL=$VITE_API_URL
 RUN npm run build --workspace client
 
 # --- runtime ---
-FROM nginx:1.27-alpine AS runtime
+FROM nginx:1.31-alpine AS runtime
 RUN addgroup -S duothan && adduser -S duothan -G duothan
 COPY client/nginx.conf /etc/nginx/conf.d/default.conf
 COPY --from=build /app/client/dist /usr/share/nginx/html
