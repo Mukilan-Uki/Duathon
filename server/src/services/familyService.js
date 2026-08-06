@@ -49,6 +49,13 @@ function ageOn(dateOfBirth, today = new Date()) {
   return age;
 }
 
+function isAdultEligible(user) {
+  if (!user?.dateOfBirth) {
+    return env.NODE_ENV !== 'production';
+  }
+  return ageOn(user.dateOfBirth) >= env.ADULT_MIN_AGE;
+}
+
 function memberFor(family, userId) {
   return family.members.find(
     (member) =>
@@ -116,7 +123,7 @@ export async function createFamily(userId, name, metadata) {
   ) {
     throw new AppError('An active verified customer account is required', 403);
   }
-  if (!user.dateOfBirth || ageOn(user.dateOfBirth) < env.ADULT_MIN_AGE) {
+  if (!isAdultEligible(user)) {
     throw new AppError('Adult identity information is required to create a family', 403);
   }
   if (
@@ -186,8 +193,7 @@ export async function inviteAdult(familyId, actor, input, metadata) {
     invitedUser.role !== 'customer' ||
     !invitedUser.isEmailVerified ||
     invitedUser.accountStatus !== 'active' ||
-    !invitedUser.dateOfBirth ||
-    ageOn(invitedUser.dateOfBirth) < env.ADULT_MIN_AGE
+    !isAdultEligible(invitedUser)
   ) {
     return null;
   }

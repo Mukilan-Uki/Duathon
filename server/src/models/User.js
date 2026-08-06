@@ -47,6 +47,9 @@ const userSchema = new mongoose.Schema(
       index: true,
     },
     dateOfBirth: { type: Date, default: null },
+    // Kept in sync with the junior profile so auth responses can safely route a
+    // minor to the restricted banking experience.
+    isJunior: { type: Boolean, default: false, index: true },
     isEmailVerified: { type: Boolean, default: false },
     // Temporary compatibility paths for pre-Phase-2 records.
     status: { type: String, enum: ['pending', 'active', 'suspended'] },

@@ -24,11 +24,13 @@ export default function LoginPage() {
     setApiError('');
     try {
       const response = await login(values);
-      const role = response.data.user.role;
+      const user = response.data.user;
       const roleHome =
-        role === 'customer'
-          ? '/dashboard'
-          : role === 'employee'
+        user.role === 'customer'
+          ? user.isJunior
+            ? '/junior'
+            : '/dashboard'
+          : user.role === 'employee'
             ? '/employee/dashboard'
             : '/admin/dashboard';
       navigate(location.state?.from?.pathname || roleHome, { replace: true });

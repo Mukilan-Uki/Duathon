@@ -3,6 +3,7 @@ import jwt from 'jsonwebtoken';
 import { env } from '../config/env.js';
 import RefreshToken from '../models/RefreshToken.js';
 import User from '../models/User.js';
+import JuniorProfile from '../models/JuniorProfile.js';
 import { AppError } from '../utils/AppError.js';
 import { createRandomToken, hashToken } from '../utils/security.js';
 
@@ -78,6 +79,8 @@ export async function rotateRefreshToken(rawToken, metadata) {
   stored.revokedByIp = metadata.ip;
   stored.replacedByToken = hashToken(next.refreshToken);
   await stored.save();
+  user.isJunior = Boolean(await JuniorProfile.exists({ juniorUser: user._id, status: { $ne: 'closed' } }));
+  await user.save();
   return { ...next, user };
 }
 

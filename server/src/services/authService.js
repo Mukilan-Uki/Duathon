@@ -1,3 +1,4 @@
+import crypto from 'node:crypto';
 import LoginHistory from '../models/LoginHistory.js';
 import PasswordResetToken from '../models/PasswordResetToken.js';
 import RefreshToken from '../models/RefreshToken.js';
@@ -13,8 +14,120 @@ import { env } from '../config/env.js';
 import { recordSecuritySignal } from './securityMonitoringService.js';
 import { parseUserAgent } from '../utils/userAgent.js';
 import { observeLoginDevice } from './trustedDeviceService.js';
+import Account from '../models/Account.js';
+import FamilyGroup from '../models/FamilyGroup.js';
+import JuniorProfile from '../models/JuniorProfile.js';
+import { generateUniqueAccountNumber } from '../utils/accountNumber.js';
 
 const LOCK_MINUTES = 15;
+
+function ageOn(dateOfBirth, today = new Date()) {
+  let age = today.getUTCFullYear() - dateOfBirth.getUTCFullYear();
+  const beforeBirthday =
+    today.getUTCMonth() < dateOfBirth.getUTCMonth() ||
+    (today.getUTCMonth() === dateOfBirth.getUTCMonth() &&
+      today.getUTCDate() < dateOfBirth.getUTCDate());
+  if (beforeBirthday) age -= 1;
+  return age;
+}
+
+function isMinor(dateOfBirth) {
+  if (!dateOfBirth) return false;
+  const parsed = dateOfBirth instanceof Date ? dateOfBirth : new Date(dateOfBirth);
+  if (Number.isNaN(parsed.getTime())) return false;
+  return ageOn(parsed) < Number(env.ADULT_MIN_AGE || 18);
+}
+
+async function uniqueFamilyCode() {
+  for (let attempt = 0; attempt < 5; attempt += 1) {
+    const code = `FAM-${crypto.randomBytes(4).toString('hex').toUpperCase()}`;
+    if (!(await FamilyGroup.exists({ familyCode: code }))) return code;
+  }
+  throw new AppError('Unable to generate a family code', 503);
+}
+
+async function ensureJuniorOnboarding(user, input) {
+  if (!isMinor(input.dateOfBirth)) return false;
+
+  const existingProfile = await JuniorProfile.findOne({ juniorUser: user._id, status: { $ne: 'closed' } });
+  if (existingProfile) {
+    user.isJunior = true;
+    await user.save();
+    return true;
+  }
+
+  const now = new Date();
+  const family = await FamilyGroup.create({
+    name: `${user.firstName} Family`,
+    familyCode: await uniqueFamilyCode(),
+    createdBy: user._id,
+    members: [
+      {
+        user: user._id,
+        role: 'family_admin',
+        relationship: 'self',
+        status: 'active',
+        permissions: {
+          viewSharedGoals: true,
+          contributeToSharedGoals: true,
+          manageJuniorAccounts: true,
+          approveJuniorTransactions: true,
+          viewJuniorTransactions: true,
+          manageFamilyMembers: true,
+          createFamilyAnnouncements: true,
+        },
+        joinedAt: now,
+        approvedAt: now,
+      },
+    ],
+  });
+
+  const profile = await JuniorProfile.create({
+    juniorUser: user._id,
+    family: family._id,
+    primaryGuardian: user._id,
+    guardians: [
+      {
+        user: user._id,
+        relationship: 'self',
+        permissions: {
+          manageControls: true,
+          manageAllowances: true,
+          approveTransactions: true,
+          viewTransactions: true,
+          manageBeneficiaries: true,
+        },
+      },
+    ],
+    dateOfBirth: input.dateOfBirth,
+    relationshipToGuardian: 'self',
+    status: 'active',
+    permissions: {
+      canTransfer: true,
+      canCreateSavingsGoals: true,
+      canRequestBeneficiaries: false,
+      canApplyForLoans: false,
+    },
+  });
+
+  await Account.create({
+    owner: user._id,
+    createdBy: user._id,
+    accountNumber: await generateUniqueAccountNumber(),
+    accountType: 'savings',
+    branchCode: 'CMB01',
+    status: 'active',
+    approvedBy: user._id,
+    approvedAt: now,
+    isJuniorRestricted: true,
+  });
+
+  profile.status = 'active';
+  await profile.save();
+  user.isJunior = true;
+  await user.save();
+  return true;
+}
 
 async function recordLogin(user, email, successful, reason, metadata, observation = null) {
   const client = parseUserAgent(metadata.userAgent);
@@ -46,6 +159,7 @@ export async function registerUser(input) {
     dateOfBirth: input.dateOfBirth,
     password: input.password,
   });
+  await ensureJuniorOnboarding(user, input);
   await issueOtp(user, 'email_verification');
   return user;
 }
@@ -57,6 +171,8 @@ export async function verifyEmail(email, code) {
   await consumeOtp(user._id, 'email_verification', code);
   user.isEmailVerified = true;
   user.accountStatus = 'active';
+  await user.save();
+  user.isJunior = Boolean(await JuniorProfile.exists({ juniorUser: user._id, status: { $ne: 'closed' } }));
   await user.save();
   return user;
 }
@@ -162,6 +278,8 @@ export async function loginUser(emailInput, password, metadata) {
   user.lockUntil = null;
   user.lastLoginAt = new Date();
   await user.save();
+  user.isJunior = Boolean(await JuniorProfile.exists({ juniorUser: user._id, status: { $ne: 'closed' } }));
+  await user.save();
   const observation = await observeLoginDevice(user, metadata.deviceToken, metadata);
   await recordLogin(user, email, true, 'success', metadata, observation);
   return {
@@ -238,23 +356,12 @@ export async function resetPassword(token, password) {
 
 export async function changePassword(userId, currentPassword, newPassword) {
   const user = await User.findById(userId).select('+password +passwordHash');
-  if (!user || !(await user.verifyPassword(currentPassword))) {
-    throw new AppError('Current password is incorrect', 400);
+  if (!user) throw new AppError('Invalid user', 404);
+  if (!(await user.verifyPassword(currentPassword))) {
+    throw new AppError('Current password is incorrect', 401);
   }
   user.password = newPassword;
-  user.passwordHash = undefined;
   user.passwordChangedAt = new Date();
   await user.save();
-  await RefreshToken.updateMany(
-    { user: user._id, revokedAt: null },
-    { $set: { revokedAt: new Date() } },
-  );
-  await createNotification({
-    recipient: user._id,
-    type: 'security',
-    title: 'Password changed',
-    message: 'Your password was changed and existing sessions were revoked.',
-    targetType: 'User',
-    targetId: user._id,
-  });
+  return user;
 }

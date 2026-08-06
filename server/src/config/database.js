@@ -6,14 +6,28 @@ export async function connectDatabase() {
     console.warn('MONGODB_URI is not configured; API is running without a database connection.');
     return false;
   }
-  await mongoose.connect(env.MONGODB_URI, {
-    serverSelectionTimeoutMS: 10000,
-    maxPoolSize: env.NODE_ENV === 'production' ? 20 : 10,
-    minPoolSize: env.NODE_ENV === 'production' ? 2 : 0,
-    autoIndex: env.NODE_ENV !== 'production',
-  });
-  console.info('MongoDB connected.');
-  return true;
+
+  try {
+    await mongoose.connect(env.MONGODB_URI, {
+      serverSelectionTimeoutMS: env.NODE_ENV === 'production' ? 30000 : 15000,
+      maxPoolSize: env.NODE_ENV === 'production' ? 20 : 10,
+      minPoolSize: env.NODE_ENV === 'production' ? 2 : 0,
+      autoIndex: env.NODE_ENV !== 'production',
+    });
+
+    console.info('MongoDB connected.');
+    return true;
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+
+    if (env.NODE_ENV === 'production') {
+      console.error('Production MongoDB connection failed.', message);
+      throw error;
+    }
+
+    console.warn('MongoDB connection failed; continuing without a database connection.', message);
+    return false;
+  }
 }
 
 export async function disconnectDatabase() {

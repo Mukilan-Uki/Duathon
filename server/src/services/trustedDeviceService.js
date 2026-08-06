@@ -56,10 +56,17 @@ const safe = (device, currentHash) => ({
 });
 
 export async function observeLoginDevice(user, rawToken, metadata) {
-  const token = rawToken || createRandomToken();
-  const hash = deviceTokenHash(token);
+  let token = rawToken || createRandomToken();
+  let hash = deviceTokenHash(token);
   let device = await TrustedDevice.findOne({ deviceIdHash: hash }).select('+deviceIdHash');
-  if (device && device.user.toString() !== user._id.toString()) device = null;
+  // A browser can retain a device cookie after a different user signs out. The
+  // device-token index is global, so reusing that cookie would otherwise throw
+  // MongoDB's duplicate-key error instead of allowing the new user to sign in.
+  if (device && device.user.toString() !== user._id.toString()) {
+    token = createRandomToken();
+    hash = deviceTokenHash(token);
+    device = null;
+  }
   const details = describe(metadata.userAgent);
   if (!device) {
     device = await TrustedDevice.create({

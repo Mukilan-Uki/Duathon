@@ -1,3 +1,3 @@
 export function getApiError(error, fallback = 'Something went wrong. Please try again') {
-  return error.response?.data?.message || fallback;
+  return error?.response?.data?.message || error?.message || fallback;
 }
