@@ -37,7 +37,7 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Build & push API image
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v7
         with:
           context: .
           file: server/Dockerfile
@@ -47,7 +47,7 @@ jobs:
             ${{ env.REGISTRY }}/${{ env.IMAGE_API }}:${{ steps.meta.outputs.sha }}
 
       - name: Build & push client image
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v7
         with:
           context: .
           file: client/Dockerfile
