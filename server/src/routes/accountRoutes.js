@@ -18,6 +18,7 @@ import { asyncHandler } from '../middleware/asyncHandler.js';
 import { authenticate } from '../middleware/authenticate.js';
 import { authorize } from '../middleware/authorize.js';
 import { validate } from '../middleware/validate.js';
+import { createRateLimitStore } from '../config/rateLimitStore.js';
 import {
   accountIdSchema,
   accountActionSchema,
@@ -39,6 +40,7 @@ const applicationLimiter = rateLimit({
     message: 'Too many account applications. Try again later',
     errors: [],
   },
+  store: createRateLimitStore('account-application'),
 });
 router.use(authenticate);
 

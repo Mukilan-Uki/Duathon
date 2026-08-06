@@ -28,7 +28,9 @@ export default function TransactionMonitoringPage() {
         setActivities(activityResult.activities);
       })
       .catch((value) => setError(getApiError(value)));
-  useEffect(load, []);
+  useEffect(() => {
+    load();
+  }, []);
 
   const flag = async (event) => {
     event.preventDefault();

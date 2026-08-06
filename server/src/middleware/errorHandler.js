@@ -1,4 +1,5 @@
 import { env } from '../config/env.js';
+import { logger } from '../config/logger.js';
 
 export function errorHandler(error, req, res, _next) {
   const duplicate = error?.code === 11000;
@@ -22,15 +23,16 @@ export function errorHandler(error, req, res, _next) {
             ? error.message
             : 'An unexpected error occurred';
   if (env.NODE_ENV !== 'test') {
+    const logPayload = {
+      requestId: req.id,
+      statusCode,
+      name: error.name,
+      path: req.originalUrl?.split('?')[0],
+    };
     if (env.NODE_ENV === 'production') {
-      console.error({
-        message: error.message,
-        statusCode,
-        name: error.name,
-        path: req.originalUrl?.split('?')[0],
-      });
+      logger.error(logPayload, error.message);
     } else {
-      console.error(error);
+      logger.error({ ...logPayload, stack: error.stack }, error.message);
     }
   }
   const errors = validation

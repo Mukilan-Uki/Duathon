@@ -12,8 +12,12 @@ export async function connectDatabase() {
       serverSelectionTimeoutMS: env.NODE_ENV === 'production' ? 30000 : 15000,
       maxPoolSize: env.NODE_ENV === 'production' ? 20 : 10,
       minPoolSize: env.NODE_ENV === 'production' ? 2 : 0,
-      autoIndex: env.NODE_ENV !== 'production',
+      autoIndex: false,
     });
+
+    if (env.NODE_ENV === 'production') {
+      await syncIndexes();
+    }
 
     console.info('MongoDB connected.');
     return true;
@@ -28,6 +32,14 @@ export async function connectDatabase() {
     console.warn('MongoDB connection failed; continuing without a database connection.', message);
     return false;
   }
+}
+
+async function syncIndexes() {
+  const models = Object.values(mongoose.connection.models);
+  for (const model of models) {
+    await model.syncIndexes();
+  }
+  console.info(`Synced indexes for ${models.length} model(s).`);
 }
 
 export async function disconnectDatabase() {

@@ -5,7 +5,7 @@ import { useAuth } from '../../hooks/useAuth';
 import { accountService } from '../../services/accountService';
 import { familyService } from '../../services/familyService';
 import { getApiError } from '../../utils/apiError';
-import { formatMinorUnits, parseMajorUnitsToMinor } from '../../utils/money';
+import { formatMinorUnits, maskAccountNumber, parseMajorUnitsToMinor } from '../../utils/money';
 
 export default function FamilyGoalsPage() {
   const { user } = useAuth();
@@ -179,7 +179,7 @@ export default function FamilyGoalsPage() {
                       .filter((a) => a.status === 'active')
                       .map((a) => (
                         <option value={a._id} key={a._id}>
-                          {a.accountNumber}
+                          {maskAccountNumber(a.accountNumber)}
                         </option>
                       ))}
                   </select>

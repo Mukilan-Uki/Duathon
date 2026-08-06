@@ -6,6 +6,7 @@ import { authenticate } from '../middleware/authenticate.js';
 import { authorize } from '../middleware/authorize.js';
 import { requireIdempotencyKey } from '../middleware/requireIdempotencyKey.js';
 import { validate } from '../middleware/validate.js';
+import { createRateLimitStore } from '../config/rateLimitStore.js';
 import { recipientValidationSchema, transferSchema } from '../validators/transactionValidators.js';
 
 const router = Router();
@@ -15,6 +16,7 @@ const transferLimiter = rateLimit({
   standardHeaders: 'draft-7',
   legacyHeaders: false,
   message: { success: false, message: 'Too many transfer requests. Try again later', errors: [] },
+  store: createRateLimitStore('transfer'),
 });
 
 router.use(authenticate, authorize('customer'));

@@ -29,6 +29,7 @@ import { authenticate } from '../middleware/authenticate.js';
 import { authorize } from '../middleware/authorize.js';
 import { requireIdempotencyKey } from '../middleware/requireIdempotencyKey.js';
 import { validate } from '../middleware/validate.js';
+import { createRateLimitStore } from '../config/rateLimitStore.js';
 import {
   announcementSchema,
   contributeGoalSchema,
@@ -51,6 +52,7 @@ const invitationLimiter = rateLimit({
   standardHeaders: 'draft-7',
   legacyHeaders: false,
   message: { success: false, message: 'Too many family invitation requests', errors: [] },
+  store: createRateLimitStore('family-invitation'),
 });
 
 router.use(authenticate, authorize('customer'));

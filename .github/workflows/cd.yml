@@ -1,0 +1,88 @@
+name: CD
+
+on:
+  push:
+    branches: [main]
+
+concurrency:
+  group: cd-main
+  cancel-in-progress: false
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_API: ${{ github.repository }}-api
+  IMAGE_CLIENT: ${{ github.repository }}-client
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    outputs:
+      api-tag: ${{ steps.meta.outputs.sha }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - id: meta
+        run: echo "sha=${GITHUB_SHA::12}" >> "$GITHUB_OUTPUT"
+
+      - uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build & push API image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: server/Dockerfile
+          push: true
+          tags: |
+            ${{ env.REGISTRY }}/${{ env.IMAGE_API }}:latest
+            ${{ env.REGISTRY }}/${{ env.IMAGE_API }}:${{ steps.meta.outputs.sha }}
+
+      - name: Build & push client image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: client/Dockerfile
+          push: true
+          tags: |
+            ${{ env.REGISTRY }}/${{ env.IMAGE_CLIENT }}:latest
+            ${{ env.REGISTRY }}/${{ env.IMAGE_CLIENT }}:${{ steps.meta.outputs.sha }}
+
+  deploy:
+    runs-on: ubuntu-latest
+    needs: build-and-push
+    steps:
+      - name: Trigger Render deploy
+        if: ${{ vars.RENDER_DEPLOY_HOOK_URL != '' }}
+        run: curl -fsS -X POST "${{ vars.RENDER_DEPLOY_HOOK_URL }}"
+
+      - name: Wait for rollout
+        if: ${{ vars.API_HEALTH_URL != '' }}
+        run: sleep 30
+
+      - name: Smoke test /api/health/ready
+        if: ${{ vars.API_HEALTH_URL != '' }}
+        id: smoke
+        run: |
+          for i in {1..10}; do
+            if curl -fsS "${{ vars.API_HEALTH_URL }}"; then
+              echo "healthy=true" >> "$GITHUB_OUTPUT"
+              exit 0
+            fi
+            sleep 10
+          done
+          echo "healthy=false" >> "$GITHUB_OUTPUT"
+          exit 1
+
+      - name: Rollback notice on failure
+        if: failure() && vars.API_HEALTH_URL != ''
+        run: |
+          echo "::error::Smoke test failed after deploy of ${{ needs.build-and-push.outputs.api-tag }}. Roll back via Render dashboard or redeploy the previous image tag."

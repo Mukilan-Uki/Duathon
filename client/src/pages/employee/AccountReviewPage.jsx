@@ -37,7 +37,7 @@ export default function AccountReviewPage() {
   }, [load]);
 
   const perform = async () => {
-    if (['reject', 'suspend', 'close'].includes(action.type) && reason.trim().length < 3) {
+    if (['reject', 'suspend'].includes(action.type) && reason.trim().length < 3) {
       setApiError('Enter a reason of at least three characters');
       return;
     }

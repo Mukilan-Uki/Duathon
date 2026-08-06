@@ -19,6 +19,7 @@ import { authenticate } from '../middleware/authenticate.js';
 import { authorize } from '../middleware/authorize.js';
 import { validate } from '../middleware/validate.js';
 import { requireTrustedOrigin } from '../middleware/requireTrustedOrigin.js';
+import { createRateLimitStore } from '../config/rateLimitStore.js';
 import {
   changePasswordSchema,
   emailSchema,
@@ -35,6 +36,7 @@ const loginLimiter = rateLimit({
   standardHeaders: 'draft-7',
   legacyHeaders: false,
   message: { success: false, message: 'Too many login attempts. Try again later', errors: [] },
+  store: createRateLimitStore('login'),
 });
 const recoveryLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
@@ -42,6 +44,7 @@ const recoveryLimiter = rateLimit({
   standardHeaders: 'draft-7',
   legacyHeaders: false,
   message: { success: false, message: 'Too many requests. Try again later', errors: [] },
+  store: createRateLimitStore('recovery'),
 });
 const registrationLimiter = rateLimit({
   windowMs: 60 * 60 * 1000,
@@ -49,6 +52,7 @@ const registrationLimiter = rateLimit({
   standardHeaders: 'draft-7',
   legacyHeaders: false,
   message: { success: false, message: 'Too many registrations. Try again later', errors: [] },
+  store: createRateLimitStore('registration'),
 });
 const sessionLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
@@ -56,6 +60,7 @@ const sessionLimiter = rateLimit({
   standardHeaders: 'draft-7',
   legacyHeaders: false,
   message: { success: false, message: 'Too many requests. Try again later', errors: [] },
+  store: createRateLimitStore('session'),
 });
 
 router.post('/register', registrationLimiter, validate(registerSchema), asyncHandler(register));

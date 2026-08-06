@@ -35,8 +35,13 @@ export default function VerifyEmailPage() {
     const email = getValues('email');
     if (!email) return setApiError('Enter your email address first');
     setApiError('');
-    await authService.resendVerification(email);
-    setNotice('If verification is pending, a new code has been sent.');
+    setNotice('');
+    try {
+      await authService.resendVerification(email);
+      setNotice('If verification is pending, a new code has been sent.');
+    } catch (error) {
+      setApiError(getApiError(error));
+    }
   };
 
   return (

@@ -6,7 +6,12 @@ import StatusBadge from '../../components/common/StatusBadge';
 import { accountService } from '../../services/accountService';
 import { loanService } from '../../services/loanService';
 import { getApiError } from '../../utils/apiError';
-import { formatMinorUnits, parseMajorUnitsToMinor } from '../../utils/money';
+import {
+  formatMinorUnits,
+  maskAccountNumber,
+  minorToMajorInput,
+  parseMajorUnitsToMinor,
+} from '../../utils/money';
 
 export default function LoansPage() {
   const [accounts, setAccounts] = useState([]);
@@ -69,7 +74,7 @@ export default function LoansPage() {
       idempotencyKey: crypto.randomUUID(),
     });
     setPaymentAccount(accounts[0]?._id || '');
-    setPaymentAmount((loan.monthlyInstallmentMinor / 100).toFixed(2));
+    setPaymentAmount(minorToMajorInput(loan.monthlyInstallmentMinor));
   };
 
   const confirmPayment = async () => {
@@ -125,7 +130,7 @@ export default function LoansPage() {
                 <option value="">Select active account</option>
                 {accounts.map((account) => (
                   <option value={account._id} key={account._id}>
-                    {account.accountNumber}
+                    {maskAccountNumber(account.accountNumber)}
                   </option>
                 ))}
               </select>
@@ -151,8 +156,17 @@ export default function LoansPage() {
               <input
                 className="mt-2 w-full rounded-lg border border-slate-300 px-3 py-2.5"
                 inputMode="decimal"
-                {...register('requestedAmount', { required: 'Amount is required' })}
+                {...register('requestedAmount', {
+                  required: 'Amount is required',
+                  pattern: {
+                    value: /^\d+(\.\d{1,2})?$/,
+                    message: 'Enter a valid amount with no more than two decimal places',
+                  },
+                })}
               />
+              {errors.requestedAmount && (
+                <span className="text-sm text-red-700">{errors.requestedAmount.message}</span>
+              )}
             </label>
             <label className="block">
               <span className="text-sm font-medium text-slate-700">Repayment period</span>
@@ -297,7 +311,8 @@ export default function LoansPage() {
               >
                 {accounts.map((account) => (
                   <option value={account._id} key={account._id}>
-                    {account.accountNumber} · {formatMinorUnits(account.availableBalanceMinor)}
+                    {maskAccountNumber(account.accountNumber)} ·{' '}
+                    {formatMinorUnits(account.availableBalanceMinor)}
                   </option>
                 ))}
               </select>

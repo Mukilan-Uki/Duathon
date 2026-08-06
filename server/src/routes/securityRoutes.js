@@ -5,6 +5,7 @@ import { asyncHandler } from '../middleware/asyncHandler.js';
 import { authenticate } from '../middleware/authenticate.js';
 import { requireTrustedOrigin } from '../middleware/requireTrustedOrigin.js';
 import { validate } from '../middleware/validate.js';
+import { createRateLimitStore } from '../config/rateLimitStore.js';
 import * as schemas from '../validators/trustedDeviceValidators.js';
 const router = Router();
 const sensitiveActionLimiter = rateLimit({
@@ -13,6 +14,7 @@ const sensitiveActionLimiter = rateLimit({
   standardHeaders: 'draft-7',
   legacyHeaders: false,
   message: { success: false, message: 'Too many security actions. Try again later', errors: [] },
+  store: createRateLimitStore('security-sensitive'),
 });
 router.use(authenticate);
 router.get('/devices', asyncHandler(controller.list));

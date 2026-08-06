@@ -42,6 +42,8 @@ const result = z
     LOAN_EDUCATION_RATE_BPS: z.coerce.number().int().min(0).max(10000).default(800),
     LOAN_HOME_RATE_BPS: z.coerce.number().int().min(0).max(10000).default(950),
     LOAN_BUSINESS_RATE_BPS: z.coerce.number().int().min(0).max(10000).default(1400),
+    LOG_LEVEL: z.enum(['fatal', 'error', 'warn', 'info', 'debug', 'trace']).default('info'),
+    REDIS_URL: z.string().optional().default(''),
   })
   .safeParse(process.env);
 

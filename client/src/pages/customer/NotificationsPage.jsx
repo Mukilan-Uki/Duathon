@@ -39,8 +39,12 @@ export default function NotificationsPage() {
     }
   };
   const readAll = async () => {
-    await operationsService.readAllNotifications();
-    load();
+    try {
+      await operationsService.readAllNotifications();
+      load();
+    } catch (value) {
+      setError(getApiError(value));
+    }
   };
 
   return (

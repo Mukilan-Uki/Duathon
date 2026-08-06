@@ -3,7 +3,7 @@ import Alert from '../../components/common/Alert';
 import { accountService } from '../../services/accountService';
 import { juniorBankingService } from '../../services/juniorBankingService';
 import { getApiError } from '../../utils/apiError';
-import { formatMinorUnits, parseMajorUnitsToMinor } from '../../utils/money';
+import { formatMinorUnits, maskAccountNumber, parseMajorUnitsToMinor } from '../../utils/money';
 
 export default function GuardianJuniorPage() {
   const [profiles, setProfiles] = useState([]);
@@ -167,7 +167,7 @@ export default function GuardianJuniorPage() {
                   .filter((a) => a.status === 'active')
                   .map((a) => (
                     <option key={a._id} value={a._id}>
-                      {a.accountNumber}
+                      {maskAccountNumber(a.accountNumber)}
                     </option>
                   ))}
               </select>

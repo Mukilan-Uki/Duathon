@@ -61,6 +61,23 @@ Use `[x]` only after checking the final public repository and deployed environme
 - [ ] Screenshot matrix in `docs/screenshots/README.md` completed
 - [ ] Screenshots reviewed for secrets and real customer information
 
+## Phase 03 — FORTIFY additions
+
+- [x] `server/Dockerfile`, `client/Dockerfile`, `docker-compose.yml` (API + client + Mongo replica set + Redis)
+- [x] `.github/workflows/ci.yml` (lint, format, test, build, audit, docker build on every PR/push)
+- [x] `.github/workflows/cd.yml` (build/push GHCR images, deploy hook, smoke test, rollback guidance)
+- [x] `.github/workflows/codeql.yml` (CodeQL + Trivy scanning)
+- [x] `.github/dependabot.yml` (npm, GitHub Actions, Docker)
+- [x] Structured JSON logging (`pino`), request correlation IDs, `/api/metrics` (Prometheus)
+- [x] Deepened `/api/health/ready` (DB ping + SMTP check)
+- [x] Graceful shutdown, Redis-backed distributed rate limiting, allowance scheduler job
+- [x] Client fixes: masked account numbers, password validation parity, silent-failure handlers, money.js guards, filter enums, nav gap, dead code
+- [ ] Branch protection rule enabled on `main` requiring CI checks (GitHub repo setting — not code)
+- [ ] `RENDER_DEPLOY_HOOK_URL` / `API_HEALTH_URL` repository variables set for CD
+- [ ] Images actually pushed to GHCR and pulled by a live deploy (requires pushing to `main` on GitHub)
+- [ ] Live URL smoke-tested against `/api/health`, `/api/health/ready`, `/api/metrics`
+- [ ] Team contributions spread across multiple committer accounts (currently single-author history)
+
 ## Final handoff
 
 - [ ] Repository URL, frontend URL, backend URL, release URL, and ZIP attached to submission

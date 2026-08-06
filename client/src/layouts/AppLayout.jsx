@@ -57,6 +57,12 @@ export default function AppLayout() {
                     <Link className="hidden font-medium text-slate-700 xl:block" to="/transactions">
                       Transactions
                     </Link>
+                    <Link className="hidden font-medium text-slate-700 xl:block" to="/family">
+                      Family
+                    </Link>
+                    <Link className="hidden font-medium text-slate-700 xl:block" to="/junior">
+                      Junior
+                    </Link>
                   </>
                 )}
                 {['employee', 'admin'].includes(user.role) && (
@@ -69,6 +75,9 @@ export default function AppLayout() {
                     </Link>
                   </>
                 )}
+                <Link className="hidden font-medium text-slate-700 lg:block" to="/security">
+                  Security
+                </Link>
                 <NotificationBell />
                 <Link className="font-medium text-slate-700" to="/profile">
                   {user.firstName}

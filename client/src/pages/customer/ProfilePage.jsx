@@ -7,6 +7,7 @@ import { useAuth } from '../../hooks/useAuth';
 import { authService } from '../../services/authService';
 import { operationsService } from '../../services/operationsService';
 import { getApiError } from '../../utils/apiError';
+import { passwordSchema } from '../../validations/authSchemas';
 
 export default function ProfilePage() {
   const { user, clearSession } = useAuth();
@@ -107,7 +108,10 @@ export default function ProfilePage() {
               autoComplete="new-password"
               {...register('newPassword', {
                 required: 'Required',
-                minLength: { value: 12, message: 'Use at least 12 characters' },
+                validate: (value) => {
+                  const result = passwordSchema.safeParse(value);
+                  return result.success || result.error.issues[0].message;
+                },
               })}
               error={errors.newPassword?.message}
             />

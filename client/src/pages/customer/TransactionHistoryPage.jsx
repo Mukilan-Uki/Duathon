@@ -107,6 +107,8 @@ export default function TransactionHistoryPage() {
           <option value="transfer">Transfer</option>
           <option value="deposit">Deposit</option>
           <option value="withdrawal">Withdrawal</option>
+          <option value="loan_disbursement">Loan disbursement</option>
+          <option value="loan_repayment">Loan repayment</option>
           <option value="reversal">Reversal</option>
         </select>
         <select
@@ -118,9 +120,12 @@ export default function TransactionHistoryPage() {
           }
         >
           <option value="">All statuses</option>
+          <option value="pending">Pending</option>
+          <option value="processing">Processing</option>
           <option value="completed">Completed</option>
           <option value="failed">Failed</option>
           <option value="reversed">Reversed</option>
+          <option value="cancelled">Cancelled</option>
         </select>
         <input
           aria-label="From date"

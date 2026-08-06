@@ -13,6 +13,7 @@ import { asyncHandler } from '../middleware/asyncHandler.js';
 import { authenticate } from '../middleware/authenticate.js';
 import { authorize } from '../middleware/authorize.js';
 import { validate } from '../middleware/validate.js';
+import { createRateLimitStore } from '../config/rateLimitStore.js';
 import {
   addBeneficiarySchema,
   beneficiaryIdSchema,
@@ -28,6 +29,7 @@ const accountLookupLimiter = rateLimit({
   standardHeaders: 'draft-7',
   legacyHeaders: false,
   message: { success: false, message: 'Too many beneficiary account requests', errors: [] },
+  store: createRateLimitStore('beneficiary-lookup'),
 });
 
 router.use(authenticate, authorize('customer'));
