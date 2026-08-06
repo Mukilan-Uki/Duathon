@@ -20,7 +20,7 @@
     "package:submission": "node server/src/scripts/submissionPackage.js"
   },
   "devDependencies": {
-    "concurrently": "^9.1.2",
+    "concurrently": "^10.0.4",
     "prettier": "^3.5.3"
   },
   "engines": {
