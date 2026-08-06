@@ -1,12 +1,12 @@
 # --- deps ---
-FROM node:20-alpine AS deps
+FROM node:25-alpine AS deps
 WORKDIR /app
 COPY package.json package-lock.json ./
 COPY server/package.json ./server/package.json
 RUN npm ci --workspace server --omit=dev
 
 # --- runtime ---
-FROM node:20-alpine AS runtime
+FROM node:25-alpine AS runtime
 ENV NODE_ENV=production
 WORKDIR /app
 RUN addgroup -S duothan && adduser -S duothan -G duothan
